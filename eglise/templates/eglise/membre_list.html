@@ -1,0 +1,112 @@
+{% extends 'eglise/base.html' %}
+
+{% block title %}Liste des Membres{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>👥 Liste des Membres</h2>
+    
+    <div style="margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
+        <h3 style="margin-bottom: 10px;">Filtres</h3>
+        <form method="get" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <div>
+                <label for="statut">Statut:</label>
+                <select name="statut" id="statut">
+                    <option value="">-- Tous --</option>
+                    <option value="nouveau" {% if request.GET.statut == 'nouveau' %}selected{% endif %}>Nouveau</option>
+                    <option value="actif" {% if request.GET.statut == 'actif' %}selected{% endif %}>Actif</option>
+                    <option value="inactif" {% if request.GET.statut == 'inactif' %}selected{% endif %}>Inactif</option>
+                    <option value="sorti" {% if request.GET.statut == 'sorti' %}selected{% endif %}>Sorti</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="tribu">Tribu:</label>
+                <select name="tribu" id="tribu">
+                    <option value="">-- Tous --</option>
+                    {% for tribu in tribus %}
+                    <option value="{{ tribu.id }}" {% if request.GET.tribu == tribu.id|stringformat:"s" %}selected{% endif %}>{{ tribu.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label for="departement">Département:</label>
+                <select name="departement" id="departement">
+                    <option value="">-- Tous --</option>
+                    {% for dept in departements %}
+                    <option value="{{ dept.id }}" {% if request.GET.departement == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <button type="submit" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">Filtrer</button>
+        </form>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Nom & Prénom</th>
+                <th>Email</th>
+                <th>Téléphone</th>
+                <th>Tribu</th>
+                <th>Département</th>
+                <th>Statut</th>
+                <th>Participation</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for membre in object_list %}
+            <tr>
+                <td><strong>{{ membre.nom_complet }}</strong></td>
+                <td>{{ membre.email|default:"N/A" }}</td>
+                <td>{{ membre.telephone|default:"N/A" }}</td>
+                <td>{{ membre.tribu.nom|default:"N/A" }}</td>
+                <td>{{ membre.departement.nom|default:"N/A" }}</td>
+                <td>
+                    <span class="badge {{ membre.statut }}">
+                        {{ membre.get_statut_display }}
+                    </span>
+                </td>
+                <td>{{ membre.taux_participation }}%</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 20px;">Aucun membre trouvé</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    {% if is_paginated %}
+    <div style="margin-top: 20px; text-align: center;">
+        {% if page_obj.has_previous %}
+        <a href="?page=1" style="margin-right: 10px;">Première</a>
+        <a href="?page={{ page_obj.previous_page_number }}" style="margin-right: 10px;">Précédente</a>
+        {% endif %}
+        
+        Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+        
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" style="margin-left: 10px;">Suivante</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}" style="margin-left: 10px;">Dernière</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    select, input[type="text"] {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    
+    label {
+        font-weight: bold;
+        margin-right: 5px;
+    }
+</style>
+{% endblock %}

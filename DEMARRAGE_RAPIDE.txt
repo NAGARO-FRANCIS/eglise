@@ -1,0 +1,356 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                  APPLICATION DE GESTION D'ÉGLISE                            ║
+║                     DÉMARRAGE RAPIDE - 5 MINUTES                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+ÉTAPE 1: PRÉPARER L'ENVIRONNEMENT
+═════════════════════════════════════════════════════════════════════════════
+
+Option A - Windows (Facile)
+───────────────────────────
+  1. Ouvrir le dossier c:\projet\CCR
+  2. Double-cliquer sur "run.bat"
+  3. Choisir option "1. Demarrer le serveur"
+  ✓ Le serveur démarre à http://localhost:8000
+
+Option B - Ligne de commande
+─────────────────────────────
+  1. Ouvrir PowerShell/CMD
+  2. cd c:\projet\CCR
+  3. python manage.py runserver
+  ✓ Le serveur démarre à http://localhost:8000
+
+
+ÉTAPE 2: ACCÉDER À L'APPLICATION
+═════════════════════════════════════════════════════════════════════════════
+
+Interface Web
+─────────────
+  URL: http://localhost:8000
+  
+  Sections:
+  ├─ Accueil → Tableau de bord avec statistiques
+  ├─ Membres → Liste complète avec filtres
+  ├─ Statistiques → Tendances et analyses
+  ├─ Analyse → Détails par tribu/département
+  └─ Administration → Gestion complète
+
+
+Administration Django
+──────────────────────
+  URL: http://localhost:8000/admin
+  
+  Identifiants:
+  • Username: admin
+  • Mot de passe: [À créer si nécessaire]
+
+
+ÉTAPE 3: CHARGER DES DONNÉES DE TEST (Optionnel)
+═════════════════════════════════════════════════════════════════════════════
+
+Pour remplir l'application avec des données de démonstration:
+
+  Méthode 1 - Windows
+  ────────────────────
+  1. Ouvrir run.bat
+  2. Choisir option "3. Charger les donnees de demo"
+  ✓ 30 membres + 15 cultes créés
+
+  Méthode 2 - Ligne de commande
+  ──────────────────────────────
+  cd c:\projet\CCR
+  python manage.py shell < load_demo_data.py
+  ✓ 30 membres + 15 cultes créés
+
+
+ÉTAPE 4: CRÉER UN COMPTE ADMINISTRATEUR
+═════════════════════════════════════════════════════════════════════════════
+
+Si c'est la première fois:
+
+  Méthode 1 - Windows
+  ────────────────────
+  1. Ouvrir run.bat
+  2. Choisir option "2. Creer un superutilisateur"
+  3. Suivre les instructions
+
+  Méthode 2 - Ligne de commande
+  ──────────────────────────────
+  cd c:\projet\CCR
+  python manage.py createsuperuser
+  
+  Remplir:
+  • Username: admin (ou autre)
+  • Email: votre@email.com
+  • Password: ••••••••
+
+
+FONCTIONNALITÉS PRINCIPALES
+═════════════════════════════════════════════════════════════════════════════
+
+📊 Tableau de Bord
+────────────────────
+  • Nombre total de membres
+  • Membres actifs/inactifs
+  • Nouveaux membres
+  • Taux de participation moyen
+  • Répartition par tribu et département
+  • Cultes récents
+
+👥 Gestion des Membres
+───────────────────────
+  • Ajouter/modifier/supprimer des membres
+  • Informations personnelles détaillées
+  • Filtres avancés (statut, tribu, département)
+  • Calcul automatique du taux de participation
+
+📅 Cultes et Présences
+───────────────────────
+  • Enregistrer les services religieux
+  • Types: Dimanche, Mercredi, Spécial, Autre
+  • Suivi des présences/absences
+  • Historique complet
+
+📈 Statistiques
+─────────────────
+  • Participation mensuelle
+  • Évolution du nombre de membres
+  • Top 10 participants actifs
+  • Tendances hebdomadaires
+
+🔍 Analyses
+────────────
+  • Distribution par tribu
+  • Distribution par département
+  • Identification des tendances
+
+
+STRUCTURE DE L'APPLICATION
+═════════════════════════════════════════════════════════════════════════════
+
+Hiérarchie:
+  Église
+  ├─ Tribus
+  │  └─ Membres (avec Département)
+  ├─ Départements
+  │  └─ Membres (avec Tribu)
+  ├─ Cultes
+  │  └─ Présences
+
+
+COMMANDES UTILES
+═════════════════════════════════════════════════════════════════════════════
+
+Arrêter le serveur
+──────────────────
+  • Windows: Ctrl + C dans la fenêtre du terminal
+
+Vérifier l'installation
+───────────────────────
+  cd c:\projet\CCR
+  python manage.py shell < test_installation.py
+
+Faire une sauvegarde
+─────────────────────
+  copy db.sqlite3 db.backup.sqlite3
+
+Restaurer une sauvegarde
+─────────────────────────
+  copy db.backup.sqlite3 db.sqlite3
+
+Effacer toutes les données
+───────────────────────────
+  cd c:\projet\CCR
+  python manage.py shell
+  > from eglise.models import *
+  > Membre.objects.all().delete()
+  > Culte.objects.all().delete()
+  > exit()
+
+
+STRUCTURE DES PAGES
+═════════════════════════════════════════════════════════════════════════════
+
+Page Accueil (http://localhost:8000)
+─────────────────────────────────────
+  Affiche:
+  - Statistiques principales en chiffres
+  - Répartition par tribu (tableau)
+  - Répartition par département (tableau)
+  - Cultes récents (tableau)
+  - Distribution par statut (tableau)
+
+Page Membres (http://localhost:8000/membres/)
+──────────────────────────────────────────────
+  Affiche:
+  - Filtres: Statut, Tribu, Département
+  - Liste complète avec colonnes:
+    * Nom & Prénom
+    * Email
+    * Téléphone
+    * Tribu
+    * Département
+    * Statut
+    * Taux de Participation
+  - Pagination (20 par page)
+
+Page Statistiques (http://localhost:8000/statistiques/)
+────────────────────────────────────────────────────────
+  Affiche:
+  - Top 10 participants
+  - Participation par mois
+  - Évolution historique
+
+Page Analyse (http://localhost:8000/analyse/)
+───────────────────────────────────────────────
+  Affiche:
+  - Analyse par tribu
+  - Analyse par département
+  - Tendances par semaine
+
+
+INTERFACE ADMIN (http://localhost:8000/admin)
+═════════════════════════════════════════════════════════════════════════════
+
+Sections disponibles:
+  
+  📍 Tribus
+  ─────────
+  • Ajouter une nouvelle tribu
+  • Modifier le nom et description
+  • Voir le nombre de membres
+  
+  🏢 Départements
+  ────────────────
+  • Ajouter un nouveau département
+  • Assigner un responsable
+  • Voir le nombre de membres
+  
+  👥 Membres
+  ──────────
+  • Ajouter un nouveau membre
+  • Éditer informations personnelles
+  • Assigner tribu et département
+  • Définir le statut
+  • Visualiser le taux de participation
+  • Filtres avancés
+  
+  📅 Cultes
+  ────────
+  • Ajouter un culte
+  • Définir date, type, thème
+  • Ajouter prédicateur
+  • Voir nombre de participants
+  
+  📋 Présences
+  ────────────
+  • Enregistrer présence/absence
+  • Vue: Membre × Culte
+  • Historique complet
+  
+  📊 Statistiques
+  ────────────────
+  • Voir statistiques calculées
+  • En lecture seule
+
+
+BESOIN D'AIDE ?
+═════════════════════════════════════════════════════════════════════════════
+
+Consultez:
+  • README.md - Documentation complète
+  • GUIDE_DEMARRAGE.md - Guide détaillé
+  • RESUME_PROJET.md - Résumé des fonctionnalités
+  • INDEX_FICHIERS.md - Index des fichiers
+  • CHANGELOG.md - Historique des modifications
+
+
+CONFIGURATION PERSONNALISÉE
+═════════════════════════════════════════════════════════════════════════════
+
+Pour modifier la langue:
+  Éditer CCR/settings.py
+  Chercher: LANGUAGE_CODE = 'fr-fr'
+
+Pour modifier le fuseau horaire:
+  Éditer CCR/settings.py
+  Chercher: TIME_ZONE = 'UTC'
+  Changer en: 'Europe/Paris' (ou autre)
+
+Pour utiliser une autre base de données:
+  Éditer CCR/settings.py
+  Section DATABASES
+
+
+MISES À JOUR ET MAINTENANCE
+═════════════════════════════════════════════════════════════════════════════
+
+Après modification des modèles:
+  cd c:\projet\CCR
+  python manage.py makemigrations
+  python manage.py migrate
+
+Vérifier la santé du système:
+  cd c:\projet\CCR
+  python manage.py check
+
+Supprimer la base de données (réinitialiser):
+  ⚠️  Attention: Cela effacera toutes les données!
+  
+  1. Supprimer db.sqlite3
+  2. python manage.py migrate
+  3. python manage.py createsuperuser
+
+
+POINTS IMPORTANTS
+═════════════════════════════════════════════════════════════════════════════
+
+✓ Le projet est fonctionnel immédiatement
+✓ Les données de test peuvent être chargées
+✓ L'interface admin est complètement configurée
+✓ Tous les templates sont prêts
+✓ La documentation est complète
+✓ Les scripts utilitaires sont fournis
+
+⚠️  Pour production:
+  - Changer DEBUG = False dans settings.py
+  - Configurer ALLOWED_HOSTS
+  - Utiliser une base de données robuste (PostgreSQL)
+  - Mettre en place un serveur WSGI (Gunicorn)
+  - Utiliser un reverse proxy (Nginx)
+
+
+VERSION ET INFOS
+═════════════════════════════════════════════════════════════════════════════
+
+Version: 1.0
+Date: 27 Avril 2026
+Status: ✅ Complet et Fonctionnel
+Django: 6.0.4
+Python: 3.7+
+BD: SQLite (dev) / PostgreSQL (production)
+
+
+COMMANDES RAPIDES (Copier-Coller)
+═════════════════════════════════════════════════════════════════════════════
+
+Démarrer le serveur:
+  cd c:\projet\CCR && python manage.py runserver
+
+Charger données test:
+  cd c:\projet\CCR && python manage.py shell < load_demo_data.py
+
+Tester l'installation:
+  cd c:\projet\CCR && python manage.py shell < test_installation.py
+
+Créer admin:
+  cd c:\projet\CCR && python manage.py createsuperuser
+
+
+═════════════════════════════════════════════════════════════════════════════
+                          PRÊT À COMMENCER ! 🚀
+═════════════════════════════════════════════════════════════════════════════
+
+Allez sur: http://localhost:8000
+
+Profitez de votre application de gestion d'église!

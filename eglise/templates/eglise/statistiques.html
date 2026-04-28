@@ -1,0 +1,99 @@
+{% extends 'eglise/base.html' %}
+
+{% block title %}Statistiques{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>📈 Statistiques Détaillées</h2>
+</div>
+
+<div class="grid">
+    <div class="card">
+        <h2>🔝 Top 10 Participants</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rang</th>
+                    <th>Nom & Prénom</th>
+                    <th>Participations</th>
+                    <th>Taux</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i, membre in top_participants %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ membre.nom_complet }}</td>
+                    <td>{{ membre.participations }}</td>
+                    <td>{{ membre.taux_participation }}%</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">Aucune donnée de participation</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="card">
+        <h2>📊 Participation par Mois (3 derniers mois)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Mois</th>
+                    <th>Cultes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in cultes_par_mois %}
+                <tr>
+                    <td>{{ data.month }}</td>
+                    <td>
+                        <div style="background: #667eea; color: white; padding: 5px 10px; border-radius: 3px; text-align: center;">
+                            {{ data.count }}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2">Aucune donnée</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h2>📅 Évolution des Membres</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Actifs</th>
+                <th>Nouveaux</th>
+                <th>Sortis</th>
+                <th>Taux Participation</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in evolution_membres %}
+            <tr>
+                <td>{{ stat.date|date:"d/m/Y" }}</td>
+                <td><strong>{{ stat.nombre_total_membres }}</strong></td>
+                <td>{{ stat.nombre_membres_actifs }}</td>
+                <td>{{ stat.nombre_membres_nouveau }}</td>
+                <td>{{ stat.nombre_membres_sorti }}</td>
+                <td>{{ stat.taux_participation_moyen }}%</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">Aucune donnée statistique enregistrée</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

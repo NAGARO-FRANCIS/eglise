@@ -1,0 +1,125 @@
+{% extends 'eglise/base.html' %}
+
+{% block title %}Analyse{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>🔍 Analyse Détaillée</h2>
+</div>
+
+<div class="grid">
+    <div class="card">
+        <h2>📍 Analyse par Tribu</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tribu</th>
+                    <th>Total</th>
+                    <th>Actifs</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tribu in analyse_tribu %}
+                <tr>
+                    <td><strong>{{ tribu.nom }}</strong></td>
+                    <td>
+                        <div style="background: #667eea; color: white; padding: 5px 10px; border-radius: 3px; text-align: center;">
+                            {{ tribu.total }}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="background: #4CAF50; color: white; padding: 5px 10px; border-radius: 3px; text-align: center;">
+                            {{ tribu.actifs }}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">Aucune tribu enregistrée</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="card">
+        <h2>🏢 Analyse par Département</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Département</th>
+                    <th>Total</th>
+                    <th>Actifs</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dept in analyse_departement %}
+                <tr>
+                    <td><strong>{{ dept.nom }}</strong></td>
+                    <td>
+                        <div style="background: #667eea; color: white; padding: 5px 10px; border-radius: 3px; text-align: center;">
+                            {{ dept.total }}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="background: #4CAF50; color: white; padding: 5px 10px; border-radius: 3px; text-align: center;">
+                            {{ dept.actifs }}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">Aucun département enregistré</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h2>📊 Tendances de Participation (par Semaine)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Semaine</th>
+                <th>Présences</th>
+                <th>Graphique</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in participations_par_semaine %}
+            <tr>
+                <td>{{ data.semaine }}</td>
+                <td>
+                    <strong>{{ data.count }}</strong>
+                </td>
+                <td>
+                    <div style="background: linear-gradient(90deg, #667eea 0%, #667eea {% widthratio data.count 100 100 %}%, #f0f0f0 {% widthratio data.count 100 100 %}%, #f0f0f0 100%); height: 20px; border-radius: 3px; min-width: 100px;">
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">Aucune donnée de participation</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>📋 Résumé de l'Analyse</h2>
+    <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; line-height: 1.8;">
+        <p><strong>Utilité du module d'analyse :</strong></p>
+        <ul style="margin-left: 20px;">
+            <li>Identifier les tendances de participation des membres</li>
+            <li>Analyser la répartition des membres par tribu et département</li>
+            <li>Évaluer la croissance ou la diminution du nombre de membres</li>
+            <li>Déterminer les périodes de faible participation</li>
+            <li>Prendre des décisions basées sur les données</li>
+            <li>Planifier des actions de mobilisation si nécessaire</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
