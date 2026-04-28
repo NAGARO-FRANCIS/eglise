@@ -1,0 +1,189 @@
+{% extends "eglise/base.html" %}
+
+{% block title %}Sélection de Catégorie - Inscription{% endblock %}
+
+{% block content %}
+<style>
+    .category-container {
+        max-width: 600px;
+        margin: 60px auto;
+    }
+    
+    .category-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .category-header h2 {
+        color: #667eea;
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+    
+    .category-header p {
+        color: #666;
+        font-size: 16px;
+    }
+    
+    .category-form {
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .radio-options {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .radio-option {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .radio-option:hover {
+        border-color: #667eea;
+        background-color: #f8f9ff;
+    }
+    
+    .radio-option input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        margin-right: 20px;
+        cursor: pointer;
+        accent-color: #667eea;
+    }
+    
+    .radio-option input[type="radio"]:checked + .option-label {
+        color: #667eea;
+        font-weight: bold;
+    }
+    
+    .radio-option input[type="radio"]:checked + .option-label .icon {
+        transform: scale(1.1);
+    }
+    
+    .option-label {
+        flex: 1;
+        cursor: pointer;
+    }
+    
+    .icon {
+        font-size: 32px;
+        margin-right: 15px;
+        display: inline-block;
+        transition: transform 0.3s ease;
+    }
+    
+    .option-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: #333;
+    }
+    
+    .option-description {
+        font-size: 14px;
+        color: #999;
+    }
+    
+    .form-actions {
+        margin-top: 30px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+    
+    .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        flex: 1;
+        max-width: 200px;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .error-message {
+        color: #F44336;
+        padding: 12px;
+        border-radius: 5px;
+        background-color: #ffebee;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="category-container">
+    <div class="category-header">
+        <h2>📝 Inscription</h2>
+        <p>Choisissez votre catégorie pour commencer</p>
+    </div>
+    
+    <form method="post" class="category-form">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="error-message">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        
+        <div class="form-group">
+            <div class="radio-options">
+                {% for radio in form.category %}
+                    <label class="radio-option">
+                        {{ radio.tag }}
+                        <div class="option-label">
+                            {% if "patriarche" in radio.data.value %}
+                                <span class="icon">👑</span>
+                                <div class="option-title">Patriarche de Tribu</div>
+                                <div class="option-description">Vous dirigez une tribu dans l'église</div>
+                            {% else %}
+                                <span class="icon">⚙️</span>
+                                <div class="option-title">Responsable de Département</div>
+                                <div class="option-description">Vous dirigez un département</div>
+                            {% endif %}
+                        </div>
+                    </label>
+                {% endfor %}
+            </div>
+            {% if form.category.errors %}
+                <div class="error-message">
+                    {{ form.category.errors }}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Continuer</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

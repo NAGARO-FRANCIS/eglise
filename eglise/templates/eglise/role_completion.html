@@ -1,0 +1,334 @@
+{% extends "eglise/base.html" %}
+
+{% block title %}Complétez votre profil{% endblock %}
+
+{% block content %}
+<style>
+    .completion-container {
+        max-width: 600px;
+        margin: 40px auto;
+    }
+    
+    .completion-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .completion-header h2 {
+        color: #667eea;
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+    
+    .completion-header p {
+        color: #666;
+        font-size: 16px;
+    }
+    
+    .user-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .user-info .username {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .user-info .step {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+    
+    .completion-form {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+        background-color: white;
+        cursor: pointer;
+    }
+    
+    .form-group select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .option-info {
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+        border-left: 4px solid #667eea;
+    }
+    
+    .option-info.patriarche {
+        border-left-color: #3f51b5;
+    }
+    
+    .option-info.patriarche::before {
+        content: "👑 ";
+    }
+    
+    .option-info.responsable {
+        border-left-color: #7b1fa2;
+    }
+    
+    .option-info.responsable::before {
+        content: "⚙️ ";
+    }
+    
+    .option-info p {
+        margin: 0;
+        color: #666;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .selected-option-info {
+        background-color: #e8eaf6;
+        border-left-color: #667eea;
+        color: #3f51b5;
+        font-weight: 600;
+        margin-top: 15px;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .selected-option-info.responsable {
+        background-color: #f3e5f5;
+        border-left-color: #7b1fa2;
+        color: #7b1fa2;
+    }
+    
+    .error-message {
+        color: #F44336;
+        padding: 12px;
+        border-radius: 5px;
+        background-color: #ffebee;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+    
+    .errorlist {
+        list-style: none;
+        padding: 0;
+        margin: 8px 0 0 0;
+    }
+    
+    .errorlist li {
+        color: #F44336;
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+    
+    .progress-steps {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
+        gap: 20px;
+    }
+    
+    .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0.6;
+    }
+    
+    .step.active {
+        opacity: 1;
+    }
+    
+    .step-number {
+        width: 40px;
+        height: 40px;
+        background-color: #e0e0e0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #666;
+    }
+    
+    .step.active .step-number {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .step-label {
+        font-size: 12px;
+        margin-top: 5px;
+        color: #666;
+    }
+    
+    .form-actions {
+        margin-top: 30px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+    
+    .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        flex: 1;
+        max-width: 150px;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+        background-color: #ddd;
+        color: #333;
+        flex: 1;
+        max-width: 150px;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #ccc;
+    }
+</style>
+
+<div class="completion-container">
+    <div class="progress-steps">
+        <div class="step">
+            <div class="step-number">✓</div>
+            <div class="step-label">Catégorie</div>
+        </div>
+        <div class="step">
+            <div class="step-number">✓</div>
+            <div class="step-label">Inscription</div>
+        </div>
+        <div class="step active">
+            <div class="step-number">3</div>
+            <div class="step-label">Profil</div>
+        </div>
+    </div>
+    
+    <div class="completion-header">
+        <h2>✨ Finalisez votre profil</h2>
+        <p>Dernière étape avant de commencer</p>
+    </div>
+    
+    <div class="user-info">
+        <div class="username">Bienvenue {{ user.get_full_name|default:user.username }} !</div>
+        <div class="step">Étape 3/3 : Informations professionnelles</div>
+    </div>
+    
+    {% if category == 'patriarche' %}
+        <div class="option-info patriarche">
+            Vous êtes inscrits en tant que <strong>Patriarche de Tribu</strong>. Veuillez sélectionner la tribu que vous dirigez.
+        </div>
+    {% else %}
+        <div class="option-info responsable">
+            Vous êtes inscrits en tant que <strong>Responsable de Département</strong>. Veuillez sélectionner le département que vous dirigez.
+        </div>
+    {% endif %}
+    
+    <form method="post" class="completion-form">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="error-message">
+                <strong>Erreur:</strong> {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        
+        {% if category == 'patriarche' %}
+            <div class="form-group">
+                <label for="id_tribu">Sélectionnez votre Tribu *</label>
+                <select id="id_tribu" name="tribu" required>
+                    <option value="">-- Choisir une tribu --</option>
+                    {% for tribu in tribu_choices %}
+                        <option value="{{ tribu.id }}">{{ tribu.nom }}</option>
+                    {% endfor %}
+                </select>
+                {% if form.tribu.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.tribu.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <div class="option-info patriarche">
+                <p>La tribu affiche le groupe de fidèles que vous dirigez. Vous pouvez modifier cette information ultérieurement.</p>
+            </div>
+        
+        {% elif category == 'responsable' %}
+            <div class="form-group">
+                <label for="id_departement">Sélectionnez votre Département *</label>
+                <select id="id_departement" name="departement" required>
+                    <option value="">-- Choisir un département --</option>
+                    {% for departement in departement_choices %}
+                        <option value="{{ departement.id }}">{{ departement.nom }}</option>
+                    {% endfor %}
+                </select>
+                {% if form.departement.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.departement.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <div class="option-info responsable">
+                <p>Le département représente votre domaine de responsabilité. Vous pouvez modifier cette information ultérieurement.</p>
+            </div>
+        {% endif %}
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Finaliser l'inscription</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

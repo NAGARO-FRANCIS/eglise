@@ -173,18 +173,55 @@
             padding: 20px;
             margin-top: 50px;
         }
+        
+        .user-info {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            text-align: right;
+            color: white;
+            font-size: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .user-info a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 15px;
+            transition: opacity 0.3s;
+        }
+        
+        .user-info a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            color: #ffd700;
+        }
     </style>
 </head>
 <body>
     <header>
         <h1>🏛️ Gestion d'Église - Suivi et Analyse</h1>
         <nav>
-            <a href="{% url 'eglise:dashboard' %}">Accueil</a>
-            <a href="{% url 'eglise:membre_list' %}">Membres</a>
-            <a href="{% url 'eglise:statistiques' %}">Statistiques</a>
-            <a href="{% url 'eglise:analyse' %}">Analyse</a>
-            <a href="{% url 'admin:index' %}">Administration</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'eglise:dashboard' %}">Accueil</a>
+                <a href="{% url 'eglise:membre_list' %}">Membres</a>
+                <a href="{% url 'eglise:statistiques' %}">Statistiques</a>
+                <a href="{% url 'eglise:analyse' %}">Analyse</a>
+                <a href="{% url 'admin:index' %}">Administration</a>
+            {% else %}
+                <a href="{% url 'eglise:login' %}">Connexion</a>
+                <a href="{% url 'eglise:category-select' %}">Inscription</a>
+            {% endif %}
         </nav>
+        {% if user.is_authenticated %}
+            <div class="user-info">
+                <span>Bienvenue, <span class="user-name">{{ user.get_full_name|default:user.username }}</span></span>
+                <a href="{% url 'eglise:logout' %}">Déconnexion</a>
+            </div>
+        {% endif %}
     </header>
     
     <div class="container">

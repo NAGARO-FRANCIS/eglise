@@ -3,8 +3,43 @@ from django.contrib.auth.models import User
 from .models import UserProfile, Tribu, Departement
 
 
+class LoginForm(forms.Form):
+    """Formulaire de connexion"""
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Nom d\'utilisateur',
+            'autofocus': 'autofocus'
+        }),
+        label="Nom d'utilisateur"
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Mot de passe'
+        }),
+        label="Mot de passe"
+    )
+
+
+class CategorySelectForm(forms.Form):
+    """Formulaire pour la sélection de catégorie"""
+    CATEGORY_CHOICES = (
+        ('patriarche', 'Patriarche de Tribu'),
+        ('responsable', 'Responsable de Département'),
+    )
+    
+    category = forms.ChoiceField(
+        choices=CATEGORY_CHOICES,
+        widget=forms.RadioSelect(),
+        label="Choisissez votre catégorie",
+        required=True
+    )
+
+
 class SignUpForm(forms.ModelForm):
-    """Formulaire d'inscription initial"""
+    """Formulaire d'inscription avec détails en fonction de la catégorie"""
     password = forms.CharField(widget=forms.PasswordInput(attrs={
         'class': 'form-control',
         'placeholder': 'Mot de passe'
@@ -13,12 +48,6 @@ class SignUpForm(forms.ModelForm):
         'class': 'form-control',
         'placeholder': 'Confirmer le mot de passe'
     }))
-    
-    role = forms.ChoiceField(
-        choices=UserProfile.ROLE_CHOICES,
-        widget=forms.RadioSelect(),
-        label="Rôle dans l'église"
-    )
     
     class Meta:
         model = User
@@ -61,12 +90,13 @@ class PatriarcheForm(forms.ModelForm):
     tribu = forms.ModelChoiceField(
         queryset=Tribu.objects.all(),
         label="Quelle tribu dirigez-vous?",
-        widget=forms.Select(attrs={'class': 'form-control'})
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        required=True
     )
     
     class Meta:
         model = UserProfile
-        fields = []
+        fields = ['tribu']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -78,12 +108,13 @@ class ResponsableForm(forms.ModelForm):
     departement = forms.ModelChoiceField(
         queryset=Departement.objects.all(),
         label="Quel département dirigez-vous?",
-        widget=forms.Select(attrs={'class': 'form-control'})
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        required=True
     )
     
     class Meta:
         model = UserProfile
-        fields = []
+        fields = ['departement']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
