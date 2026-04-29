@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.views.generic import TemplateView, ListView, View
+from django.views.generic import TemplateView, ListView, View, DetailView
 from django.views.generic.edit import CreateView
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -10,7 +10,7 @@ from django.utils import timezone
 from datetime import timedelta
 from collections import defaultdict
 from .models import Membre, Culte, Presence, Tribu, Departement, Statistique, UserProfile
-from .forms import SignUpForm, PatriarcheForm, ResponsableForm, PasteurForm, CategorySelectForm, LoginForm
+from .forms import SignUpForm, PatriarcheForm, ResponsableForm, PasteurForm, CategorySelectForm, LoginForm, MembreForm, PresenceForm, PresenceMembreSelectionForm
 from .mixins import DataFilteringMixin, ProtectedDataAccessMixin, RoleRequiredMixin
 
 
@@ -424,3 +424,205 @@ class AnalyseView(ProtectedDataAccessMixin, TemplateView):
         ]
         
         return context
+
+
+class TribuMembreListView(ProtectedDataAccessMixin, TemplateView):
+    """Vue pour lister et gérer les membres d'une tribu"""
+    template_name = 'eglise/tribu_membres.html'
+    
+    def get(self, request, tribu_id):
+        """Récupère la liste des membres de la tribu"""
+        try:
+            tribu = Tribu.objects.get(id=tribu_id)
+        except Tribu.DoesNotExist:
+            return redirect('eglise:dashboard')
+        
+        # Vérifier que l'utilisateur a accès à cette tribu
+        user = request.user
+        if not user.is_superuser:
+            try:
+                if user.profile.role == 'patriarche' and user.profile.tribu_id != tribu_id:
+                    return redirect('eglise:dashboard')
+            except:
+                return redirect('eglise:dashboard')
+        
+        membres = Membre.objects.filter(tribu=tribu).order_by('nom', 'prenom')
+        
+        context = {
+            'tribu': tribu,
+            'membres': membres,
+            'form': MembreForm(),
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def post(self, request, tribu_id):
+        """Ajoute un nouveau membre à la tribu"""
+        try:
+            tribu = Tribu.objects.get(id=tribu_id)
+        except Tribu.DoesNotExist:
+            return redirect('eglise:dashboard')
+        
+        # Vérifier que l'utilisateur a accès à cette tribu
+        user = request.user
+        if not user.is_superuser:
+            try:
+                if user.profile.role == 'patriarche' and user.profile.tribu_id != tribu_id:
+                    return redirect('eglise:dashboard')
+            except:
+                return redirect('eglise:dashboard')
+        
+        form = MembreForm(request.POST)
+        if form.is_valid():
+            membre = form.save(commit=False)
+            membre.tribu = tribu
+            if not membre.departement:
+                membre.departement = None
+            membre.save()
+            return redirect('eglise:tribu_membres', tribu_id=tribu_id)
+        
+        membres = Membre.objects.filter(tribu=tribu).order_by('nom', 'prenom')
+        context = {
+            'tribu': tribu,
+            'membres': membres,
+            'form': form,
+        }
+        
+        return render(request, self.template_name, context)
+
+
+class DepartementMembreListView(ProtectedDataAccessMixin, TemplateView):
+    """Vue pour lister et gérer les membres d'un département"""
+    template_name = 'eglise/departement_membres.html'
+    
+    def get(self, request, departement_id):
+        """Récupère la liste des membres du département"""
+        try:
+            departement = Departement.objects.get(id=departement_id)
+        except Departement.DoesNotExist:
+            return redirect('eglise:dashboard')
+        
+        # Vérifier que l'utilisateur a accès à ce département
+        user = request.user
+        if not user.is_superuser:
+            try:
+                if user.profile.role == 'responsable' and user.profile.departement_id != departement_id:
+                    return redirect('eglise:dashboard')
+            except:
+                return redirect('eglise:dashboard')
+        
+        membres = Membre.objects.filter(departement=departement).order_by('nom', 'prenom')
+        
+        context = {
+            'departement': departement,
+            'membres': membres,
+            'form': MembreForm(),
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def post(self, request, departement_id):
+        """Ajoute un nouveau membre au département"""
+        try:
+            departement = Departement.objects.get(id=departement_id)
+        except Departement.DoesNotExist:
+            return redirect('eglise:dashboard')
+        
+        # Vérifier que l'utilisateur a accès à ce département
+        user = request.user
+        if not user.is_superuser:
+            try:
+                if user.profile.role == 'responsable' and user.profile.departement_id != departement_id:
+                    return redirect('eglise:dashboard')
+            except:
+                return redirect('eglise:dashboard')
+        
+        form = MembreForm(request.POST)
+        if form.is_valid():
+            membre = form.save(commit=False)
+            membre.departement = departement
+            if not membre.tribu:
+                membre.tribu = None
+            membre.save()
+            return redirect('eglise:departement_membres', departement_id=departement_id)
+        
+        membres = Membre.objects.filter(departement=departement).order_by('nom', 'prenom')
+        context = {
+            'departement': departement,
+            'membres': membres,
+            'form': form,
+        }
+        
+        return render(request, self.template_name, context)
+
+
+class CultePresenceListView(ProtectedDataAccessMixin, TemplateView):
+    """Vue pour gérer la présence à un culte"""
+    template_name = 'eglise/culte_presence.html'
+    
+    def get(self, request, culte_id):
+        """Récupère la liste de présence du culte"""
+        try:
+            culte = Culte.objects.get(id=culte_id)
+        except Culte.DoesNotExist:
+            return redirect('eglise:dashboard')
+        
+        # Récupérer les présences du culte
+        presences = Presence.objects.filter(culte=culte).select_related('membre').order_by('membre__nom', 'membre__prenom')
+        
+        # Récupérer tous les membres qui ne sont pas encore dans ce culte
+        membres_non_enregistres = Membre.objects.exclude(
+            presence__culte=culte
+        ).filter(statut='actif').order_by('nom', 'prenom')
+        
+        context = {
+            'culte': culte,
+            'presences': presences,
+            'membres_non_enregistres': membres_non_enregistres,
+            'form': PresenceMembreSelectionForm(),
+        }
+        
+        return render(request, self.template_name, context)
+    
+    def post(self, request, culte_id):
+        """Ajoute des membres à la liste de présence du culte"""
+        try:
+            culte = Culte.objects.get(id=culte_id)
+        except Culte.DoesNotExist:
+            return redirect('eglise:dashboard')
+        
+        form = PresenceMembreSelectionForm(request.POST)
+        if form.is_valid():
+            membres = form.cleaned_data['membres']
+            for membre in membres:
+                # Créer la présence si elle n'existe pas déjà
+                Presence.objects.get_or_create(
+                    membre=membre,
+                    culte=culte,
+                    defaults={'present': True}
+                )
+            
+            # Mettre à jour le nombre de participants
+            culte.mettre_a_jour_nombre_participants()
+        
+        return redirect('eglise:culte_presence', culte_id=culte_id)
+
+
+class PresenceToggleView(LoginRequiredMixin, View):
+    """Vue pour basculer le statut de présence d'un membre"""
+    
+    def post(self, request, presence_id):
+        """Bascule la présence d'un membre"""
+        try:
+            presence = Presence.objects.get(id=presence_id)
+        except Presence.DoesNotExist:
+            return redirect('eglise:dashboard')
+        
+        # Basculer la présence
+        presence.present = not presence.present
+        presence.save()
+        
+        # Mettre à jour le nombre de participants
+        presence.culte.mettre_a_jour_nombre_participants()
+        
+        return redirect('eglise:culte_presence', culte_id=presence.culte.id)

@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import UserProfile, Tribu, Departement
+from .models import UserProfile, Tribu, Departement, Membre, Presence, Culte
 
 
 class LoginForm(forms.Form):
@@ -131,3 +131,72 @@ class PasteurForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.role = 'pasteur'
+
+
+class MembreForm(forms.ModelForm):
+    """Formulaire pour ajouter ou modifier un membre"""
+    
+    class Meta:
+        model = Membre
+        fields = ['nom', 'prenom', 'email', 'telephone', 'adresse', 'genre', 'date_naissance', 'tribu', 'departement', 'statut']
+        widgets = {
+            'nom': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nom'
+            }),
+            'prenom': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Prénom'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Email'
+            }),
+            'telephone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Téléphone'
+            }),
+            'adresse': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Adresse'
+            }),
+            'genre': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'date_naissance': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'tribu': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'departement': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'statut': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+        }
+
+
+class PresenceForm(forms.ModelForm):
+    """Formulaire pour enregistrer la présence"""
+    
+    class Meta:
+        model = Presence
+        fields = ['present']
+        widgets = {
+            'present': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+        }
+
+
+class PresenceMembreSelectionForm(forms.Form):
+    """Formulaire pour sélectionner des membres et les ajouter à un culte"""
+    membres = forms.ModelMultipleChoiceField(
+        queryset=Membre.objects.all(),
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+        label="Sélectionnez les membres à ajouter"
+    )

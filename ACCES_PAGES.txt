@@ -1,0 +1,83 @@
+"""
+Guide d'accès aux pages de gestion des membres et présence
+"""
+
+print("""
+╔════════════════════════════════════════════════════════════════════════════╗
+║         🎯 GUIDE D'ACCÈS - GESTION DES MEMBRES PAR TRIBU/DÉPARTEMENT      ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+ÉTAPES POUR VOIR LES PAGES DE GESTION:
+
+1️⃣  D'ABORD: Préparez la base de données
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Dans PowerShell, exécutez:
+   
+   cd c:\projet\CCR
+   python setup_data.py
+   
+   Cela va créer:
+   - 4 Tribus (Judah, Benjamin, Levi, Simeon)
+   - 4 Départements (Louange, Enseignement, Assistance, Jeunesse)
+   - 5 Cultes
+
+2️⃣  ENSUITE: Lancez le serveur Django
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   python manage.py runserver
+
+3️⃣  ENFIN: Accédez aux pages
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   🏛️  TABLEAU DE BORD:
+   http://localhost:8000/
+   
+   Identifiez-vous avec: admin / admin123
+   (Créez le compte avec: python create_admin.py)
+
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   👥 GESTION PAR TRIBU (choisissez un ID):
+   http://localhost:8000/tribu/1/membres/
+   http://localhost:8000/tribu/2/membres/
+   http://localhost:8000/tribu/3/membres/
+   
+   🏢 GESTION PAR DÉPARTEMENT (choisissez un ID):
+   http://localhost:8000/departement/1/membres/
+   http://localhost:8000/departement/2/membres/
+   http://localhost:8000/departement/3/membres/
+   
+   ✝️  GESTION DE PRÉSENCE (choisissez un ID):
+   http://localhost:8000/culte/1/presence/
+   http://localhost:8000/culte/2/presence/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DANS CHAQUE PAGE:
+
+✓ Formulaire d'ajout de membre (à gauche)
+  - Remplissez Prénom (requis)
+  - Remplissez Nom (requis)
+  - Email, Téléphone, Adresse (optionnels)
+  - Genre, Statut (optionnels)
+  - Cliquez "Ajouter le membre"
+
+✓ Liste des membres (en bas)
+  - Affiche tous les membres de la tribu/département
+  - Statut coloré (Actif=vert, Nouveau=bleu, etc.)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  SI VOUS VOYEZ UNE ERREUR 404:
+
+   - Vérifiez que les IDs (1, 2, 3, etc.) existent
+   - Exécutez: python setup_data.py
+   - Vérifiez que les migrations sont appliquées: python manage.py migrate
+
+⚠️  SI LE FORMULAIRE N'APPARAÎT PAS:
+
+   - Rechargez la page (Ctrl+F5)
+   - Vérifiez que vous êtes connecté
+   - Consultez la console Django pour les erreurs
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+""")

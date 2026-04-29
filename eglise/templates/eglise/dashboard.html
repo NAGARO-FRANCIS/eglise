@@ -46,8 +46,8 @@
             </thead>
             <tbody>
                 {% for tribu in membres_par_tribu %}
-                <tr>
-                    <td>{{ tribu.nom }}</td>
+                <tr style="cursor: pointer;" onclick="window.location='{% url 'eglise:tribu_membres' tribu.id %}'">
+                    <td><a href="{% url 'eglise:tribu_membres' tribu.id %}" style="text-decoration: none; color: inherit;">{{ tribu.nom }}</a></td>
                     <td><strong>{{ tribu.nombre }}</strong></td>
                 </tr>
                 {% empty %}
@@ -70,8 +70,8 @@
             </thead>
             <tbody>
                 {% for dept in membres_par_departement %}
-                <tr>
-                    <td>{{ dept.nom }}</td>
+                <tr style="cursor: pointer;" onclick="window.location='{% url 'eglise:departement_membres' dept.id %}'">
+                    <td><a href="{% url 'eglise:departement_membres' dept.id %}" style="text-decoration: none; color: inherit;">{{ dept.nom }}</a></td>
                     <td><strong>{{ dept.nombre }}</strong></td>
                 </tr>
                 {% empty %}
@@ -94,6 +94,7 @@
                 <th>Thème</th>
                 <th>Prédicateur</th>
                 <th>Participants</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -104,10 +105,11 @@
                 <td>{{ culte.theme|default:"N/A" }}</td>
                 <td>{{ culte.predicateur|default:"N/A" }}</td>
                 <td><strong>{{ culte.nombre_participants }}</strong></td>
+                <td><a href="{% url 'eglise:culte_presence' culte.id %}" style="padding: 6px 12px; background: #667eea; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">Gérer présence</a></td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5">Aucun culte enregistré</td>
+                <td colspan="6">Aucun culte enregistré</td>
             </tr>
             {% endfor %}
         </tbody>

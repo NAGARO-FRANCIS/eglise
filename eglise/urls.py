@@ -13,4 +13,12 @@ urlpatterns = [
     path('inscription/', views.CategorySelectView.as_view(), name='category-select'),
     path('signup/', views.SignUpView.as_view(), name='signup'),
     path('role-completion/', views.RoleCompletionView.as_view(), name='role-completion'),
+    
+    # Gestion des membres par tribu et département
+    path('tribu/<int:tribu_id>/membres/', views.TribuMembreListView.as_view(), name='tribu_membres'),
+    path('departement/<int:departement_id>/membres/', views.DepartementMembreListView.as_view(), name='departement_membres'),
+    
+    # Gestion de la présence par culte
+    path('culte/<int:culte_id>/presence/', views.CultePresenceListView.as_view(), name='culte_presence'),
+    path('presence/<int:presence_id>/toggle/', views.PresenceToggleView.as_view(), name='presence_toggle'),
 ]
