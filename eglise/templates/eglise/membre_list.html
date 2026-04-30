@@ -3,12 +3,276 @@
 {% block title %}{% if page_title %}{{ page_title }}{% else %}Liste des Membres{% endif %}{% endblock %}
 
 {% block content %}
+<style>
+    .filters-section {
+        margin-bottom: 1.5rem;
+        background: #f9f9f9;
+        padding: clamp(1rem, 2vw, 1.25rem);
+        border-radius: 5px;
+    }
+    
+    .filters-section h3 {
+        margin-bottom: 1rem;
+        font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+    }
+    
+    .filters-form {
+        display: flex;
+        gap: clamp(0.75rem, 2vw, 1rem);
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    .filter-group label {
+        font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .filter-group select {
+        padding: clamp(0.5rem, 1vw, 0.625rem) clamp(0.5rem, 1vw, 0.75rem);
+        font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .filter-group select:hover {
+        border-color: #667eea;
+    }
+    
+    .filter-group select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    }
+    
+    .filter-submit {
+        padding: clamp(0.5rem, 1vw, 0.625rem) clamp(1rem, 2vw, 1.25rem);
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+        font-weight: 600;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        height: fit-content;
+    }
+    
+    .filter-submit:hover {
+        background: #764ba2;
+        transform: translateY(-2px);
+    }
+    
+    .filter-submit:active {
+        transform: translateY(0);
+    }
+    
+    @media (max-width: 768px) {
+        .filters-form {
+            gap: 0.5rem;
+        }
+        
+        .filter-group {
+            flex: 0 1 auto;
+            min-width: 100px;
+        }
+    }
+    
+    @media (max-width: 600px) {
+        .filters-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .filter-group {
+            width: 100%;
+            min-width: unset;
+        }
+        
+        .filter-submit {
+            width: 100%;
+        }
+    }
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        padding: clamp(0.4rem, 1vw, 0.5rem) clamp(0.75rem, 1.5vw, 0.875rem);
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: clamp(0.65rem, 1.5vw, 0.8rem);
+        font-weight: 600;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+    
+    .btn-edit {
+        background: #2196F3;
+        color: white;
+    }
+    
+    .btn-edit:hover {
+        background: #0b7dda;
+    }
+    
+    .btn-delete {
+        background: #f44336;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background: #da190b;
+    }
+    
+    /* Modal Responsive */
+    #editModal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.4);
+        overflow-y: auto;
+    }
+    
+    #editModal .modal-content {
+        background-color: #fefefe;
+        margin: clamp(5%, 50px, 20%) auto;
+        padding: clamp(1rem, 2vw, 1.5rem);
+        border: 1px solid #888;
+        border-radius: 5px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    #editModal .close {
+        color: #aaa;
+        float: right;
+        font-size: clamp(1.5rem, 3vw, 1.75rem);
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    #editModal .close:hover {
+        color: black;
+    }
+    
+    #editModal h2 {
+        font-size: clamp(1.1rem, 3vw, 1.3rem);
+        margin-bottom: 1rem;
+    }
+    
+    .modal-form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .modal-form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+        font-weight: 600;
+    }
+    
+    .modal-form-group input,
+    .modal-form-group select {
+        width: 100%;
+        padding: clamp(0.5rem, 1vw, 0.625rem);
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+        box-sizing: border-box;
+    }
+    
+    .modal-buttons {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 1.5rem;
+    }
+    
+    .modal-btn {
+        padding: clamp(0.5rem, 1vw, 0.625rem) clamp(1rem, 2vw, 1.5rem);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+        font-weight: 600;
+        min-width: 100px;
+    }
+    
+    .modal-btn-save {
+        background: #667eea;
+        color: white;
+    }
+    
+    .modal-btn-cancel {
+        background: #ddd;
+        color: #333;
+    }
+    
+    .pagination {
+        margin-top: 1.5rem;
+        text-align: center;
+        font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+    }
+    
+    .pagination a {
+        padding: clamp(0.4rem, 1vw, 0.5rem) clamp(0.75rem, 1.5vw, 1rem);
+        margin: 0 0.25rem;
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .pagination a:hover {
+        text-decoration: underline;
+    }
+    
+    @media (max-width: 600px) {
+        .filters-form {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            gap: 0.25rem;
+        }
+        
+        .btn-action {
+            flex: 1;
+            min-width: 60px;
+        }
+    }
+</style>
+
 <div class="card">
     <h2>👥 {% if page_title %}{{ page_title }}{% else %}Liste des Membres{% endif %}</h2>
     
     {% if show_presence_graphs %}
     <!-- Graphes comparatifs pour responsables et patriarches -->
-    <div class="grid" style="margin-bottom: 30px;">
+    <div class="grid" style="margin-bottom: 2rem;">
         <div class="card">
             <h3>📊 Présence par Membre</h3>
             <canvas id="presenceChart" style="max-height: 300px;"></canvas>
@@ -21,10 +285,10 @@
     </div>
     {% endif %}
     
-    <div style="margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
-        <h3 style="margin-bottom: 10px;">Filtres</h3>
-        <form method="get" style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <div>
+    <div class="filters-section">
+        <h3>Filtres</h3>
+        <form method="get" class="filters-form">
+            <div class="filter-group">
                 <label for="statut">Statut:</label>
                 <select name="statut" id="statut">
                     <option value="">-- Tous --</option>
@@ -35,7 +299,7 @@
                 </select>
             </div>
             
-            <div>
+            <div class="filter-group">
                 <label for="tribu">Tribu:</label>
                 <select name="tribu" id="tribu">
                     <option value="">-- Tous --</option>
@@ -45,7 +309,7 @@
                 </select>
             </div>
             
-            <div>
+            <div class="filter-group">
                 <label for="departement">Département:</label>
                 <select name="departement" id="departement">
                     <option value="">-- Tous --</option>
@@ -55,105 +319,109 @@
                 </select>
             </div>
             
-            <button type="submit" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">Filtrer</button>
+            <button type="submit" class="filter-submit">Filtrer</button>
         </form>
     </div>
     
-    <table>
-        <thead>
-            <tr>
-                <th>Nom & Prénom</th>
-                <th>Email</th>
-                <th>Téléphone</th>
-                <th>Tribu</th>
-                <th>Département</th>
-                <th>Statut</th>
-                <th>Présences</th>
-                <th>Taux</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for membre in object_list %}
-            <tr>
-                <td><strong>{{ membre.nom_complet }}</strong></td>
-                <td>{{ membre.email|default:"N/A" }}</td>
-                <td>{{ membre.telephone|default:"N/A" }}</td>
-                <td>{{ membre.tribu.nom|default:"N/A" }}</td>
-                <td>{{ membre.departement.nom|default:"N/A" }}</td>
-                <td>
-                    <span class="badge {{ membre.statut }}">
-                        {{ membre.get_statut_display }}
-                    </span>
-                </td>
-                <td>{{ membre.presences_count|default:0 }}</td>
-                <td>
-                    <div style="background: linear-gradient(to right, #4CAF50 {{ membre.taux_participation }}%, #e0e0e0 {{ membre.taux_participation }}%); padding: 5px 10px; border-radius: 3px; color: white; font-weight: bold; width: 60px; text-align: center;">
-                        {{ membre.taux_participation }}%
-                    </div>
-                </td>
-                <td style="white-space: nowrap;">
-                    <button class="btn-edit" onclick="editMembre({{ membre.id }}, '{{ membre.nom }}', '{{ membre.prenom }}', '{{ membre.email }}', '{{ membre.telephone }}', '{{ membre.statut }}')" style="padding: 5px 10px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; margin-right: 5px;">✏️ Modifier</button>
-                    <button class="btn-delete" onclick="deleteMembre({{ membre.id }}, '{{ membre.nom_complet }}')" style="padding: 5px 10px; background: #f44336; color: white; border: none; border-radius: 3px; cursor: pointer;">🗑️ Supprimer</button>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="9" style="text-align: center; padding: 20px;">Aucun membre trouvé</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom & Prénom</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Tribu</th>
+                    <th>Département</th>
+                    <th>Statut</th>
+                    <th>Présences</th>
+                    <th>Taux</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for membre in object_list %}
+                <tr>
+                    <td><strong>{{ membre.nom_complet }}</strong></td>
+                    <td>{{ membre.email|default:"N/A" }}</td>
+                    <td>{{ membre.telephone|default:"N/A" }}</td>
+                    <td>{{ membre.tribu.nom|default:"N/A" }}</td>
+                    <td>{{ membre.departement.nom|default:"N/A" }}</td>
+                    <td>
+                        <span class="badge {{ membre.statut }}">
+                            {{ membre.get_statut_display }}
+                        </span>
+                    </td>
+                    <td>{{ membre.presences_count|default:0 }}</td>
+                    <td>
+                        <div class="progress-bar" style="--value: {{ membre.taux_participation }}%;">
+                            {{ membre.taux_participation }}%
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-edit" onclick="editMembre({{ membre.id }}, '{{ membre.nom }}', '{{ membre.prenom }}', '{{ membre.email }}', '{{ membre.telephone }}', '{{ membre.statut }}')">✏️</button>
+                            <button class="btn-action btn-delete" onclick="deleteMembre({{ membre.id }}, '{{ membre.nom_complet }}')">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 1.25rem;">Aucun membre trouvé</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     
     {% if is_paginated %}
-    <div style="margin-top: 20px; text-align: center;">
+    <div class="pagination">
         {% if page_obj.has_previous %}
-        <a href="?page=1" style="margin-right: 10px;">Première</a>
-        <a href="?page={{ page_obj.previous_page_number }}" style="margin-right: 10px;">Précédente</a>
+        <a href="?page=1">Première</a>
+        <a href="?page={{ page_obj.previous_page_number }}">Précédente</a>
         {% endif %}
         
-        Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+        <span>Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
         
         {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}" style="margin-left: 10px;">Suivante</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}" style="margin-left: 10px;">Dernière</a>
+        <a href="?page={{ page_obj.next_page_number }}">Suivante</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">Dernière</a>
         {% endif %}
     </div>
     {% endif %}
 </div>
 
 <!-- Modal de modification -->
-<div id="editModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4);">
-    <div style="background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; border-radius: 5px; width: 90%; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <span onclick="closeEditModal()" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
-        <h2>Modifier les informations du membre</h2>
+<div id="editModal">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h2>Modifier les informations</h2>
         <form id="editForm">
             {% csrf_token %}
             <input type="hidden" id="membreId" name="membre_id">
             
-            <div style="margin-bottom: 15px;">
+            <div class="modal-form-group">
                 <label for="nom">Nom:</label>
-                <input type="text" id="nom" name="nom" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                <input type="text" id="nom" name="nom" required>
             </div>
             
-            <div style="margin-bottom: 15px;">
+            <div class="modal-form-group">
                 <label for="prenom">Prénom:</label>
-                <input type="text" id="prenom" name="prenom" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                <input type="text" id="prenom" name="prenom" required>
             </div>
             
-            <div style="margin-bottom: 15px;">
+            <div class="modal-form-group">
                 <label for="email">Email:</label>
-                <input type="email" id="email" name="email" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                <input type="email" id="email" name="email">
             </div>
             
-            <div style="margin-bottom: 15px;">
+            <div class="modal-form-group">
                 <label for="telephone">Téléphone:</label>
-                <input type="text" id="telephone" name="telephone" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                <input type="text" id="telephone" name="telephone">
             </div>
             
-            <div style="margin-bottom: 15px;">
+            <div class="modal-form-group">
                 <label for="statut">Statut:</label>
-                <select id="statut" name="statut" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                <select id="statut" name="statut">
                     <option value="nouveau">Nouveau</option>
                     <option value="actif">Actif</option>
                     <option value="inactif">Inactif</option>
@@ -161,44 +429,45 @@
                 </select>
             </div>
             
-            <div style="text-align: right;">
-                <button type="button" onclick="closeEditModal()" style="padding: 8px 16px; background: #999; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Annuler</button>
-                <button type="button" onclick="submitEditForm()" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Enregistrer</button>
+            <div class="modal-buttons">
+                <button type="button" class="modal-btn modal-btn-cancel" onclick="closeEditModal()">Annuler</button>
+                <button type="button" class="modal-btn modal-btn-save" onclick="submitEditForm()">Enregistrer</button>
             </div>
         </form>
     </div>
 </div>
 
 <!-- Modal de confirmation de suppression -->
-<div id="deleteModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4);">
-    <div style="background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; border-radius: 5px; width: 90%; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+<div id="deleteModal" class="modal-delete">
+    <div class="modal-content">
         <h2>Confirmer la suppression</h2>
         <p>Êtes-vous sûr de vouloir supprimer <strong id="memberNameToDelete"></strong>?</p>
-        <div style="text-align: right;">
-            <button type="button" onclick="closeDeleteModal()" style="padding: 8px 16px; background: #999; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Annuler</button>
-            <button type="button" onclick="confirmDelete()" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Supprimer</button>
+        <div class="modal-buttons">
+            <button type="button" class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">Annuler</button>
+            <button type="button" class="modal-btn modal-btn-delete" onclick="confirmDelete()" style="background: #f44336; color: white;">Supprimer</button>
         </div>
     </div>
 </div>
 
 <style>
-    select, input[type="text"], input[type="email"] {
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 14px;
-    }
-    
-    label {
-        font-weight: bold;
-        margin-right: 5px;
+    .modal-delete {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.4);
+        overflow-y: auto;
     }
     
     .badge {
-        padding: 4px 8px;
+        padding: clamp(0.3rem, 0.5vw, 0.4rem) clamp(0.6rem, 1vw, 0.8rem);
         border-radius: 3px;
         color: white;
         font-weight: bold;
+        font-size: clamp(0.7rem, 1.5vw, 0.85rem);
     }
     
     .badge.actif {
@@ -273,7 +542,6 @@
     
     function confirmDelete() {
         if (deleteMembreId) {
-            // Faire une requête AJAX pour supprimer le membre
             fetch(`/api/membres/${deleteMembreId}/delete/`, {
                 method: 'DELETE',
                 headers: {
