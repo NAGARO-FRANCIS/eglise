@@ -230,3 +230,49 @@ class PresenceMembreSelectionForm(forms.Form):
         required=False,
         label="Sélectionnez les membres à ajouter"
     )
+
+
+class CulteForm(forms.ModelForm):
+    """Formulaire pour créer ou modifier un culte"""
+    
+    class Meta:
+        model = Culte
+        fields = ['date', 'type_culte', 'theme', 'predicateur', 'nombre_participants', 'notes']
+        widgets = {
+            'date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'required': True
+            }),
+            'type_culte': forms.Select(attrs={
+                'class': 'form-control',
+                'required': True
+            }),
+            'theme': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Thème du culte (optionnel)'
+            }),
+            'predicateur': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Prédicateur (optionnel)'
+            }),
+            'nombre_participants': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre de personnes présentes',
+                'min': '0',
+                'required': True
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Notes (optionnel)',
+                'rows': 3
+            }),
+        }
+        labels = {
+            'date': 'Date du culte *',
+            'type_culte': 'Type de culte *',
+            'theme': 'Thème',
+            'predicateur': 'Prédicateur',
+            'nombre_participants': 'Nombre de personnes présentes *',
+            'notes': 'Notes',
+        }

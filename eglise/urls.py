@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import culte_views
 
 app_name = 'eglise'
 
@@ -25,6 +26,13 @@ urlpatterns = [
     # Gestion de la présence par culte
     path('culte/<int:culte_id>/presence/', views.CultePresenceListView.as_view(), name='culte_presence'),
     path('presence/<int:presence_id>/toggle/', views.PresenceToggleView.as_view(), name='presence_toggle'),
+    
+    # Gestion des cultes pour le département STATISTIQUE
+    path('cultes/', culte_views.CulteListView.as_view(), name='culte_list'),
+    path('cultes/nouveau/', culte_views.CulteCreateView.as_view(), name='culte_create'),
+    path('cultes/<int:culte_id>/modifier/', culte_views.CulteUpdateView.as_view(), name='culte_update'),
+    path('cultes/<int:culte_id>/supprimer/', culte_views.CulteDeleteView.as_view(), name='culte_delete'),
+    path('cultes/statistiques/', culte_views.CulteStatisticsView.as_view(), name='culte_statistics'),
     
     # API endpoints pour modifier et supprimer les membres
     path('api/membres/update/', views.MembreUpdateAPIView.as_view(), name='api_membre_update'),

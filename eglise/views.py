@@ -5,14 +5,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Count, Q, Avg
+from django.db.models import Count, Q, Avg, Max, Min
 from django.utils import timezone
 from django.http import JsonResponse
 from datetime import timedelta
 from collections import defaultdict
 import json
 from .models import Membre, Culte, Presence, Tribu, Departement, Statistique, UserProfile
-from .forms import SignUpForm, PatriarcheForm, ResponsableForm, PasteurForm, CategorySelectForm, LoginForm, MembreForm, PresenceForm, PresenceMembreSelectionForm
+from .forms import SignUpForm, PatriarcheForm, ResponsableForm, PasteurForm, CategorySelectForm, LoginForm, MembreForm, PresenceForm, PresenceMembreSelectionForm, CulteForm
 from .mixins import DataFilteringMixin, ProtectedDataAccessMixin, RoleRequiredMixin
 
 
@@ -323,6 +323,12 @@ class DashboardView(ProtectedDataAccessMixin, TemplateView):
             })
         context['membres_par_statut_json'] = json.dumps(statut_json)
         
+        # Données pour graphique d'assistance par type de culte
+        context['attendance_by_type_json'] = self.get_attendance_by_culte_type()
+        
+        # Données pour graphique de tendance d'assistance par type de culte
+        context['attendance_trend_json'] = self.get_attendance_trend_by_culte_type()
+        
         # Données JSON pour les graphiques (si admin ou pasteur)
         if user_role in ['admin', 'pasteur']:
             # Analyse par tribu pour graphique
@@ -373,6 +379,99 @@ class DashboardView(ProtectedDataAccessMixin, TemplateView):
             context['participation_trends_json'] = json.dumps(trends_list)
         
         return context
+    
+    def get_attendance_by_culte_type(self):
+        """Prépare les données d'assistance par type de culte pour un graphique en barres"""
+        # Mapping des types de culte aux labels en français
+        type_culte_labels = {
+            'dimanche': 'Dimanche',
+            'mercredi': 'Mercredi',
+            'special': 'Spécial',
+            'autre': 'Autre'
+        }
+        
+        # Compter les présences par type de culte
+        presences_by_type = Presence.objects.filter(
+            present=True
+        ).values('culte__type_culte').annotate(
+            total=Count('id')
+        )
+        
+        data_list = []
+        for item in presences_by_type:
+            culte_type = item['culte__type_culte']
+            label = type_culte_labels.get(culte_type, culte_type)
+            data_list.append({
+                'type': label,
+                'count': item['total']
+            })
+        
+        return json.dumps(data_list)
+    
+    def get_attendance_trend_by_culte_type(self):
+        """Prépare les données de tendance d'assistance par type de culte pour un graphique en courbe"""
+        # Obtenir les 60 derniers jours
+        sixty_days_ago = timezone.now().date() - timedelta(days=60)
+        
+        # Récupérer toutes les présences des 60 derniers jours avec leurs cultes
+        presences = Presence.objects.filter(
+            present=True,
+            culte__date__gte=sixty_days_ago
+        ).select_related('culte').order_by('culte__date')
+        
+        # Organiser les données par date et type de culte
+        dates_set = set()
+        culte_types = set()
+        attendance_by_date_type = defaultdict(lambda: defaultdict(int))
+        
+        for presence in presences:
+            date_str = presence.culte.date.strftime('%Y-%m-%d')
+            culte_type = presence.culte.get_type_culte_display()
+            dates_set.add(date_str)
+            culte_types.add(culte_type)
+            attendance_by_date_type[date_str][culte_type] += 1
+        
+        # Trier les dates
+        sorted_dates = sorted(dates_set)
+        sorted_types = sorted(culte_types)
+        
+        # Préparer les données pour Chart.js
+        labels = sorted_dates
+        datasets = []
+        colors_bg = [
+            'rgba(102, 126, 234, 0.2)',
+            'rgba(118, 75, 162, 0.2)',
+            'rgba(76, 175, 80, 0.2)',
+            'rgba(255, 152, 0, 0.2)'
+        ]
+        colors_border = [
+            'rgba(102, 126, 234, 1)',
+            'rgba(118, 75, 162, 1)',
+            'rgba(76, 175, 80, 1)',
+            'rgba(255, 152, 0, 1)'
+        ]
+        
+        for idx, culte_type in enumerate(sorted_types):
+            data_points = [
+                attendance_by_date_type[date].get(culte_type, 0)
+                for date in sorted_dates
+            ]
+            datasets.append({
+                'label': culte_type,
+                'data': data_points,
+                'borderColor': colors_border[idx % len(colors_border)],
+                'backgroundColor': colors_bg[idx % len(colors_bg)],
+                'borderWidth': 2,
+                'fill': True,
+                'tension': 0.4
+            })
+        
+        chart_data = {
+            'labels': labels,
+            'datasets': datasets
+        }
+        
+        return json.dumps(chart_data)
 
 
 class MembreListView(ProtectedDataAccessMixin, ListView):

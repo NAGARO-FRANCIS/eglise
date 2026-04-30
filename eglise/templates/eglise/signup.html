@@ -5,97 +5,139 @@
 {% block content %}
 <style>
     .signup-container {
-        max-width: 600px;
-        margin: clamp(20px, 5vh, 40px) auto;
+        max-width: 650px;
+        margin: clamp(30px, 6vh, 50px) auto;
         padding: 0 1rem;
     }
     
     .signup-header {
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 2.5rem;
+        animation: slideInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     .signup-header h2 {
-        color: #667eea;
-        font-size: clamp(1.5rem, 5vw, 1.75rem);
-        margin-bottom: 0.5rem;
+        color: #5e72e4;
+        font-size: clamp(1.6rem, 5vw, 2rem);
+        margin-bottom: 0.75rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+    
+    .signup-header p {
+        color: #718096;
+        font-size: clamp(0.9rem, 2vw, 1.05rem);
+        margin: 0;
     }
     
     .category-badge {
         display: inline-block;
-        padding: clamp(0.5rem, 1vw, 0.5rem) clamp(1rem, 2vw, 1rem);
-        border-radius: 20px;
-        font-size: clamp(0.8rem, 2vw, 0.95rem);
-        font-weight: bold;
-        margin-top: 0.5rem;
+        padding: clamp(0.6rem, 2vw, 0.8rem) clamp(1.2rem, 3vw, 1.5rem);
+        border-radius: 25px;
+        font-size: clamp(0.85rem, 2vw, 1rem);
+        font-weight: 700;
+        margin-top: 1rem;
+        letter-spacing: 0.3px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
     
     .category-badge.patriarche {
-        background-color: #e8eaf6;
-        color: #3f51b5;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
     }
     
     .category-badge.responsable {
-        background-color: #f3e5f5;
-        color: #7b1fa2;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
     }
     
     .signup-form {
         background: white;
-        padding: clamp(1.5rem, 3vw, 2rem);
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        padding: clamp(2rem, 4vw, 2.5rem);
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(94, 114, 228, 0.15), 0 0 1px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(94, 114, 228, 0.1);
+        animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     .form-group {
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.75rem;
     }
     
     .form-group label {
         display: block;
-        margin-bottom: 0.5rem;
-        color: #333;
-        font-weight: 600;
-        font-size: clamp(0.8rem, 2vw, 0.95rem);
+        margin-bottom: 0.75rem;
+        color: #2d3748;
+        font-weight: 700;
+        font-size: clamp(0.85rem, 2vw, 1rem);
+        letter-spacing: 0.2px;
     }
     
     .form-group input,
     .form-group select {
         width: 100%;
-        padding: clamp(0.6rem, 1.5vw, 0.75rem) 12px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: clamp(0.8rem, 2vw, 1rem);
-        transition: border-color 0.3s ease;
+        padding: clamp(0.8rem, 2vw, 0.95rem) 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: clamp(0.85rem, 2vw, 1rem);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-sizing: border-box;
+        background: white;
+        font-family: inherit;
     }
     
     .form-group input:focus,
     .form-group select:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: #5e72e4;
+        box-shadow: 0 0 0 4px rgba(94, 114, 228, 0.1);
+        background: white;
     }
     
     .form-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1rem;
+        gap: 1.5rem;
     }
     
     @media (max-width: 600px) {
         .form-row {
             grid-template-columns: 1fr;
+            gap: 1rem;
         }
     }
     
     .section-title {
-        color: #667eea;
-        font-size: clamp(0.9rem, 2.5vw, 1rem);
-        font-weight: bold;
-        margin: 1.5rem 0 1rem 0;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e0e0e0;
+        color: #5e72e4;
+        font-size: clamp(1rem, 2.5vw, 1.15rem);
+        font-weight: 700;
+        margin: 2rem 0 1.5rem 0;
+        padding-bottom: 1rem;
+        border-bottom: 3px solid #e2e8f0;
+        letter-spacing: 0.3px;
     }
     
     .section-title::before {

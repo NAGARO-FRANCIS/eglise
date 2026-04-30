@@ -1,0 +1,109 @@
+{% extends 'eglise/base.html' %}
+
+{% block title %}Gestion des Cultes{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>{{ page_title }}</h2>
+        <a href="{% url 'eglise:culte_create' %}" class="btn" style="background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+            ➕ Ajouter un Culte
+        </a>
+    </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="grid">
+    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764fa2 100%); color: white; border: none;">
+        <h3>📅 Total Cultes</h3>
+        <p style="font-size: 2.5em; margin: 10px 0;">{{ stats.total_cultes }}</p>
+    </div>
+    <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none;">
+        <h3>👥 Moyenne Participants (3m)</h3>
+        <p style="font-size: 2.5em; margin: 10px 0;">{{ stats.moyenne_participants }}</p>
+    </div>
+    <div class="card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none;">
+        <h3>📊 Cultes (3 mois)</h3>
+        <p style="font-size: 2.5em; margin: 10px 0;">{{ stats.total_cultes_3m }}</p>
+    </div>
+</div>
+
+<!-- Liste des cultes -->
+<div class="card">
+    <h2>📋 Liste des Cultes</h2>
+    
+    {% if cultes %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
+            <tr>
+                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Date</th>
+                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Type</th>
+                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Thème</th>
+                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Prédicateur</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">👥 Présents</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">🔗 Enregistrements</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for culte in cultes %}
+            <tr style="border-bottom: 1px solid #ddd; hover-effect;">
+                <td style="padding: 12px; border: 1px solid #ddd;">
+                    <strong>{{ culte.date|date:"d/m/Y" }}</strong>
+                </td>
+                <td style="padding: 12px; border: 1px solid #ddd;">
+                    <span style="background: #667eea; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.85em;">
+                        {{ culte.get_type_culte_display }}
+                    </span>
+                </td>
+                <td style="padding: 12px; border: 1px solid #ddd;">
+                    {{ culte.theme|default:"N/A" }}
+                </td>
+                <td style="padding: 12px; border: 1px solid #ddd;">
+                    {{ culte.predicateur|default:"N/A" }}
+                </td>
+                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                    <strong style="font-size: 1.2em; color: #667eea;">{{ culte.nombre_participants }}</strong>
+                </td>
+                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                    <span style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">
+                        {{ culte.nombre_enregistrements }}
+                    </span>
+                </td>
+                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                    <a href="{% url 'eglise:culte_update' culte.id %}" style="color: #667eea; text-decoration: none; margin: 0 5px;">✏️ Modifier</a>
+                    <form method="post" action="{% url 'eglise:culte_delete' culte.id %}" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr?');">
+                        {% csrf_token %}
+                        <button type="submit" style="background: none; border: none; color: #dc3545; cursor: pointer; text-decoration: underline;">🗑️ Supprimer</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="padding: 20px; text-align: center; background: #f9f9f9; border-radius: 4px;">
+        <p style="color: #999;">Aucun culte enregistré. <a href="{% url 'eglise:culte_create' %}" style="color: #667eea;">Créer le premier</a></p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Lien vers statistiques -->
+<div class="card" style="background: #f0f7ff; border-left: 4px solid #667eea;">
+    <h3>📊 Consulter les Statistiques Détaillées</h3>
+    <p>Voir les courbes d'évolution et les histogrammes de participation</p>
+    <a href="{% url 'eglise:culte_statistics' %}" class="btn" style="background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
+        Voir Statistiques →
+    </a>
+</div>
+
+<style>
+    tr:hover {
+        background-color: #f9f9f9;
+    }
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}

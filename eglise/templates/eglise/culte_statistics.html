@@ -1,0 +1,171 @@
+{% extends 'eglise/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>{{ page_title }}</h2>
+    <p style="color: #666;">Analyse détaillée de la participation aux cultes</p>
+</div>
+
+<!-- Statistiques globales -->
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764fa2 100%); color: white; border: none; text-align: center;">
+        <h3 style="margin: 0 0 10px 0;">Cultes Totaux</h3>
+        <p style="font-size: 2.5em; margin: 10px 0;">{{ stats.total_cultes }}</p>
+    </div>
+    <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; text-align: center;">
+        <h3 style="margin: 0 0 10px 0;">Total Participants</h3>
+        <p style="font-size: 2.5em; margin: 10px 0;">{{ stats.total_participants }}</p>
+    </div>
+    <div class="card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none; text-align: center;">
+        <h3 style="margin: 0 0 10px 0;">Moyenne Participants</h3>
+        <p style="font-size: 2.5em; margin: 10px 0;">{{ stats.average_participants }}</p>
+    </div>
+    <div class="card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none; text-align: center;">
+        <h3 style="margin: 0 0 10px 0;">Max - Min</h3>
+        <p style="font-size: 1.8em; margin: 10px 0;">{{ stats.max_participants }} - {{ stats.min_participants }}</p>
+    </div>
+</div>
+
+<!-- Graphiques -->
+<div class="grid">
+    <div class="card">
+        <h2>📈 Évolution de la Participation</h2>
+        <canvas id="evolutionChart" style="max-height: 400px;"></canvas>
+    </div>
+    
+    <div class="card">
+        <h2>📊 Participation par Type de Culte</h2>
+        <canvas id="typeChart" style="max-height: 400px;"></canvas>
+    </div>
+</div>
+
+<!-- Retour à la liste -->
+<div class="card" style="text-align: center;">
+    <a href="{% url 'eglise:culte_list' %}" class="btn" style="background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
+        ← Retour à la liste des cultes
+    </a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    // Graphique d'évolution
+    const evolutionData = {{ evolution_data_json|safe }};
+    if (evolutionData && evolutionData.length > 0) {
+        const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
+        const dates = evolutionData.map(d => d.date);
+        const participants = evolutionData.map(d => d.participants);
+        
+        new Chart(evolutionCtx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Nombre de Participants',
+                    data: participants,
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            callback: function(value) {
+                                return value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Graphique par type de culte
+    const typeData = {{ type_data_json|safe }};
+    if (typeData && typeData.length > 0) {
+        const typeCtx = document.getElementById('typeChart').getContext('2d');
+        const types = typeData.map(d => d.type);
+        const counts = typeData.map(d => d.avg_participants);
+        
+        const colors = [
+            'rgba(102, 126, 234, 0.7)',
+            'rgba(118, 75, 162, 0.7)',
+            'rgba(76, 175, 80, 0.7)',
+            'rgba(255, 152, 0, 0.7)'
+        ];
+        const borderColors = [
+            'rgba(102, 126, 234, 1)',
+            'rgba(118, 75, 162, 1)',
+            'rgba(76, 175, 80, 1)',
+            'rgba(255, 152, 0, 1)'
+        ];
+        
+        new Chart(typeCtx, {
+            type: 'bar',
+            data: {
+                labels: types,
+                datasets: [{
+                    label: 'Moyenne de Participants',
+                    data: counts,
+                    backgroundColor: colors.slice(0, types.length),
+                    borderColor: borderColors.slice(0, types.length),
+                    borderWidth: 2,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+<style>
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}

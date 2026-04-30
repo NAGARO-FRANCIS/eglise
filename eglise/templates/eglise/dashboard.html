@@ -40,6 +40,13 @@
         <canvas id="statutChart" style="max-height: 300px;"></canvas>
     </div>
     
+    <div class="card">
+        <h2>⛪ Effectif par Type de Culte</h2>
+        <canvas id="attendanceTypeChart" style="max-height: 300px;"></canvas>
+    </div>
+</div>
+
+<div class="grid">
     {% if show_tribu_section %}
     <div class="card">
         <h2>📍 Répartition par Tribu</h2>
@@ -53,6 +60,11 @@
         <canvas id="departementChart" style="max-height: 300px;"></canvas>
     </div>
     {% endif %}
+</div>
+
+<div class="card">
+    <h2>📈 Tendance d'Assistance par Type de Culte</h2>
+    <canvas id="attendanceTrendChart" style="max-height: 400px;"></canvas>
 </div>
 
 <div class="card">
@@ -206,5 +218,82 @@
         }
     });
     {% endif %}
+    
+    // Graphique de comparaison des effectifs par type de culte
+    const attendanceTypeCtx = document.getElementById('attendanceTypeChart').getContext('2d');
+    const attendanceTypeData = {{ attendance_by_type_json|safe }};
+    
+    new Chart(attendanceTypeCtx, {
+        type: 'bar',
+        data: {
+            labels: attendanceTypeData.map(a => a.type),
+            datasets: [{
+                label: 'Nombre de Participants',
+                data: attendanceTypeData.map(a => a.count),
+                backgroundColor: [
+                    'rgba(102, 126, 234, 0.8)',
+                    'rgba(118, 75, 162, 0.8)',
+                    'rgba(76, 175, 80, 0.8)',
+                    'rgba(255, 152, 0, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(102, 126, 234, 1)',
+                    'rgba(118, 75, 162, 1)',
+                    'rgba(76, 175, 80, 1)',
+                    'rgba(255, 152, 0, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            indexAxis: 'x',
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+    
+    // Graphique de tendance d'assistance par type de culte
+    const attendanceTrendCtx = document.getElementById('attendanceTrendChart').getContext('2d');
+    const attendanceTrendData = {{ attendance_trend_json|safe }};
+    
+    new Chart(attendanceTrendCtx, {
+        type: 'line',
+        data: {
+            labels: attendanceTrendData.labels,
+            datasets: attendanceTrendData.datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
 </script>
 {% endblock %}
