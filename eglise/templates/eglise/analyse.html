@@ -8,118 +8,152 @@
 </div>
 
 <div class="grid">
+    {% if show_tribu_section %}
     <div class="card">
         <h2>📍 Analyse par Tribu</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Tribu</th>
-                    <th>Total</th>
-                    <th>Actifs</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for tribu in analyse_tribu %}
-                <tr>
-                    <td><strong>{{ tribu.nom }}</strong></td>
-                    <td>
-                        <div style="background: #667eea; color: white; padding: 5px 10px; border-radius: 3px; text-align: center;">
-                            {{ tribu.total }}
-                        </div>
-                    </td>
-                    <td>
-                        <div style="background: #4CAF50; color: white; padding: 5px 10px; border-radius: 3px; text-align: center;">
-                            {{ tribu.actifs }}
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="3">Aucune tribu enregistrée</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <canvas id="tribuChart" style="max-height: 400px;"></canvas>
     </div>
+    {% endif %}
     
+    {% if show_departement_section %}
     <div class="card">
         <h2>🏢 Analyse par Département</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Département</th>
-                    <th>Total</th>
-                    <th>Actifs</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for dept in analyse_departement %}
-                <tr>
-                    <td><strong>{{ dept.nom }}</strong></td>
-                    <td>
-                        <div style="background: #667eea; color: white; padding: 5px 10px; border-radius: 3px; text-align: center;">
-                            {{ dept.total }}
-                        </div>
-                    </td>
-                    <td>
-                        <div style="background: #4CAF50; color: white; padding: 5px 10px; border-radius: 3px; text-align: center;">
-                            {{ dept.actifs }}
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="3">Aucun département enregistré</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <canvas id="departementChart" style="max-height: 400px;"></canvas>
     </div>
+    {% endif %}
 </div>
 
 <div class="card">
     <h2>📊 Tendances de Participation (par Semaine)</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Semaine</th>
-                <th>Présences</th>
-                <th>Graphique</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for data in participations_par_semaine %}
-            <tr>
-                <td>{{ data.semaine }}</td>
-                <td>
-                    <strong>{{ data.count }}</strong>
-                </td>
-                <td>
-                    <div style="background: linear-gradient(90deg, #667eea 0%, #667eea {% widthratio data.count 100 100 %}%, #f0f0f0 {% widthratio data.count 100 100 %}%, #f0f0f0 100%); height: 20px; border-radius: 3px; min-width: 100px;">
-                    </div>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="3">Aucune donnée de participation</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <canvas id="participationTrendsChart" style="max-height: 400px;"></canvas>
 </div>
 
-<div class="card">
-    <h2>📋 Résumé de l'Analyse</h2>
-    <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; line-height: 1.8;">
-        <p><strong>Utilité du module d'analyse :</strong></p>
-        <ul style="margin-left: 20px;">
-            <li>Identifier les tendances de participation des membres</li>
-            <li>Analyser la répartition des membres par tribu et département</li>
-            <li>Évaluer la croissance ou la diminution du nombre de membres</li>
-            <li>Déterminer les périodes de faible participation</li>
-            <li>Prendre des décisions basées sur les données</li>
-            <li>Planifier des actions de mobilisation si nécessaire</li>
-        </ul>
-    </div>
-</div>
+<script>
+    // Graphique des tribus
+    {% if show_tribu_section %}
+    const tribuCtx = document.getElementById('tribuChart').getContext('2d');
+    const tribuData = {{ tribu_data_json|safe }};
+    
+    new Chart(tribuCtx, {
+        type: 'doughnut',
+        data: {
+            labels: tribuData.map(t => t.nom),
+            datasets: [{
+                data: tribuData.map(t => t.actifs),
+                backgroundColor: [
+                    'rgba(102, 126, 234, 0.8)',
+                    'rgba(118, 75, 162, 0.8)',
+                    'rgba(76, 175, 80, 0.8)',
+                    'rgba(255, 152, 0, 0.8)',
+                    'rgba(244, 67, 54, 0.8)',
+                    'rgba(63, 81, 181, 0.8)',
+                    'rgba(233, 30, 99, 0.8)',
+                    'rgba(0, 150, 136, 0.8)',
+                    'rgba(156, 39, 176, 0.8)',
+                    'rgba(103, 58, 183, 0.8)'
+                ],
+                borderWidth: 2,
+                borderColor: 'white'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'right',
+                    labels: {
+                        font: { size: 12 }
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // Graphique des départements
+    {% if show_departement_section %}
+    const deptCtx = document.getElementById('departementChart').getContext('2d');
+    const deptData = {{ departement_data_json|safe }};
+    
+    new Chart(deptCtx, {
+        type: 'doughnut',
+        data: {
+            labels: deptData.map(d => d.nom),
+            datasets: [{
+                data: deptData.map(d => d.actifs),
+                backgroundColor: [
+                    'rgba(102, 126, 234, 0.8)',
+                    'rgba(118, 75, 162, 0.8)',
+                    'rgba(76, 175, 80, 0.8)',
+                    'rgba(255, 152, 0, 0.8)',
+                    'rgba(244, 67, 54, 0.8)',
+                    'rgba(63, 81, 181, 0.8)',
+                    'rgba(233, 30, 99, 0.8)',
+                    'rgba(0, 150, 136, 0.8)',
+                    'rgba(156, 39, 176, 0.8)',
+                    'rgba(103, 58, 183, 0.8)'
+                ],
+                borderWidth: 2,
+                borderColor: 'white'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'right',
+                    labels: {
+                        font: { size: 12 }
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // Graphique des tendances de participation
+    const trendCtx = document.getElementById('participationTrendsChart').getContext('2d');
+    const trendData = {{ participation_trends_json|safe }};
+    
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: trendData.map(t => t.semaine),
+            datasets: [{
+                label: 'Présences',
+                data: trendData.map(t => t.count),
+                borderColor: 'rgba(76, 175, 80, 1)',
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: 'rgba(76, 175, 80, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        font: { size: 12 }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}

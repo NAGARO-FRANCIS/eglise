@@ -9,6 +9,7 @@ from django.db.models import Count, Q, Avg
 from django.utils import timezone
 from datetime import timedelta
 from collections import defaultdict
+import json
 from .models import Membre, Culte, Presence, Tribu, Departement, Statistique, UserProfile
 from .forms import SignUpForm, PatriarcheForm, ResponsableForm, PasteurForm, CategorySelectForm, LoginForm, MembreForm, PresenceForm, PresenceMembreSelectionForm
 from .mixins import DataFilteringMixin, ProtectedDataAccessMixin, RoleRequiredMixin
@@ -211,35 +212,55 @@ class DashboardView(ProtectedDataAccessMixin, TemplateView):
         user = self.request.user
         is_admin_or_pasteur = user.is_superuser or (hasattr(user, 'profile') and user.profile.role == 'pasteur')
         
-        # Statistiques par tribu (filtrées)
-        if is_admin_or_pasteur:
-            context['membres_par_tribu'] = Tribu.objects.annotate(
-                nombre=Count('membre', filter=Q(membre__statut='actif'))
-            ).order_by('-nombre')
-        else:
-            # Patriarche voit sa tribu, responsable voit ses membres groupés
-            tribu = self.get_user_tribu()
-            if tribu:
-                context['membres_par_tribu'] = Tribu.objects.filter(id=tribu.id).annotate(
-                    nombre=Count('membre', filter=Q(membre__statut='actif'))
-                )
+        # Déterminer le rôle de l'utilisateur
+        user_role = None
+        try:
+            if user.is_superuser:
+                user_role = 'admin'
             else:
-                context['membres_par_tribu'] = []
+                user_role = user.profile.role
+        except:
+            pass
         
-        # Statistiques par département (filtrées)
-        if is_admin_or_pasteur:
-            context['membres_par_departement'] = Departement.objects.annotate(
-                nombre=Count('membre', filter=Q(membre__statut='actif'))
-            ).order_by('-nombre')
+        # Statistiques par tribu (filtrées) - Ne pas afficher si l'utilisateur est responsable
+        if user_role == 'responsable':
+            context['membres_par_tribu'] = []
+            context['show_tribu_section'] = False
         else:
-            # Responsable voit son département, patriarche voit les départements de sa tribu
-            departement = self.get_user_departement()
-            if departement:
-                context['membres_par_departement'] = Departement.objects.filter(id=departement.id).annotate(
+            context['show_tribu_section'] = True
+            if is_admin_or_pasteur:
+                context['membres_par_tribu'] = Tribu.objects.annotate(
                     nombre=Count('membre', filter=Q(membre__statut='actif'))
-                )
+                ).order_by('-nombre')
             else:
-                context['membres_par_departement'] = []
+                # Patriarche voit sa tribu
+                tribu = self.get_user_tribu()
+                if tribu:
+                    context['membres_par_tribu'] = Tribu.objects.filter(id=tribu.id).annotate(
+                        nombre=Count('membre', filter=Q(membre__statut='actif'))
+                    )
+                else:
+                    context['membres_par_tribu'] = []
+        
+        # Statistiques par département (filtrées) - Ne pas afficher si l'utilisateur est patriarche
+        if user_role == 'patriarche':
+            context['membres_par_departement'] = []
+            context['show_departement_section'] = False
+        else:
+            context['show_departement_section'] = True
+            if is_admin_or_pasteur:
+                context['membres_par_departement'] = Departement.objects.annotate(
+                    nombre=Count('membre', filter=Q(membre__statut='actif'))
+                ).order_by('-nombre')
+            else:
+                # Responsable voit son département
+                departement = self.get_user_departement()
+                if departement:
+                    context['membres_par_departement'] = Departement.objects.filter(id=departement.id).annotate(
+                        nombre=Count('membre', filter=Q(membre__statut='actif'))
+                    )
+                else:
+                    context['membres_par_departement'] = []
         
         # Cultes récents (tous les cultes, la participation est filtrée)
         cultes_recents = Culte.objects.all()[:10]
@@ -340,7 +361,20 @@ class StatistiquesView(ProtectedDataAccessMixin, TemplateView):
         ]
         
         # Évolution des membres
-        context['evolution_membres'] = Statistique.objects.all().order_by('date')
+        evolution_membres = Statistique.objects.all().order_by('date')
+        context['evolution_membres'] = evolution_membres
+        
+        # Préparer les données JSON pour les graphiques
+        evolution_json = []
+        for stat in evolution_membres:
+            evolution_json.append({
+                'date': stat.date.strftime('%d/%m/%Y'),
+                'total': stat.nombre_total_membres,
+                'actifs': stat.nombre_membres_actifs,
+                'nouveau': stat.nombre_membres_nouveau,
+                'sorti': stat.nombre_membres_sorti
+            })
+        context['evolution_membres_json'] = json.dumps(evolution_json)
         
         # Top participants (filtrés selon les membres accessibles)
         cultes_recentes = Culte.objects.filter(
@@ -355,6 +389,33 @@ class StatistiquesView(ProtectedDataAccessMixin, TemplateView):
         ).order_by('-participations')[:10]
         
         context['top_participants'] = top_participants
+        
+        # Préparer les données JSON pour les top participants
+        top_json = []
+        for member in top_participants:
+            top_json.append({
+                'nom_complet': f"{member.prenom} {member.nom}",
+                'participations': member.participations
+            })
+        context['top_participants_json'] = json.dumps(top_json)
+        
+        # Calculer les taux de participation
+        total_presences = Presence.objects.filter(
+            culte__date__gte=debut,
+            membre__in=membres_filtered
+        ).count()
+        
+        presences_positives = Presence.objects.filter(
+            culte__date__gte=debut,
+            membre__in=membres_filtered,
+            present=True
+        ).count()
+        
+        participation_rates = {
+            'presents': presences_positives,
+            'absents': total_presences - presences_positives
+        }
+        context['participation_rates_json'] = json.dumps(participation_rates)
         
         return context
 
@@ -373,37 +434,83 @@ class AnalyseView(ProtectedDataAccessMixin, TemplateView):
         user = self.request.user
         is_admin_or_pasteur = user.is_superuser or (hasattr(user, 'profile') and user.profile.role == 'pasteur')
         
-        # Analyse par tribu (filtrée)
-        if is_admin_or_pasteur:
-            context['analyse_tribu'] = Tribu.objects.annotate(
-                total=Count('membre'),
-                actifs=Count('membre', filter=Q(membre__statut='actif'))
-            )
-        else:
-            tribu = self.get_user_tribu()
-            if tribu:
-                context['analyse_tribu'] = Tribu.objects.filter(id=tribu.id).annotate(
-                    total=Count('membre'),
-                    actifs=Count('membre', filter=Q(membre__statut='actif'))
-                )
+        # Déterminer le rôle de l'utilisateur
+        user_role = None
+        try:
+            if user.is_superuser:
+                user_role = 'admin'
             else:
-                context['analyse_tribu'] = []
+                user_role = user.profile.role
+        except:
+            pass
         
-        # Analyse par département (filtrée)
-        if is_admin_or_pasteur:
-            context['analyse_departement'] = Departement.objects.annotate(
-                total=Count('membre'),
-                actifs=Count('membre', filter=Q(membre__statut='actif'))
-            )
+        # Analyse par tribu (filtrée) - Ne pas afficher si l'utilisateur est responsable
+        if user_role == 'responsable':
+            context['analyse_tribu'] = []
+            context['show_tribu_section'] = False
+            context['tribu_data_json'] = json.dumps([])
         else:
-            departement = self.get_user_departement()
-            if departement:
-                context['analyse_departement'] = Departement.objects.filter(id=departement.id).annotate(
+            context['show_tribu_section'] = True
+            if is_admin_or_pasteur:
+                analyse_tribu = Tribu.objects.annotate(
                     total=Count('membre'),
                     actifs=Count('membre', filter=Q(membre__statut='actif'))
                 )
             else:
-                context['analyse_departement'] = []
+                tribu = self.get_user_tribu()
+                if tribu:
+                    analyse_tribu = Tribu.objects.filter(id=tribu.id).annotate(
+                        total=Count('membre'),
+                        actifs=Count('membre', filter=Q(membre__statut='actif'))
+                    )
+                else:
+                    analyse_tribu = []
+            
+            context['analyse_tribu'] = analyse_tribu
+            
+            # Préparer JSON pour graphique
+            tribu_json = []
+            for tribu in analyse_tribu:
+                tribu_json.append({
+                    'nom': tribu.nom,
+                    'total': tribu.total,
+                    'actifs': tribu.actifs
+                })
+            context['tribu_data_json'] = json.dumps(tribu_json)
+        
+        # Analyse par département (filtrée) - Ne pas afficher si l'utilisateur est patriarche
+        if user_role == 'patriarche':
+            context['analyse_departement'] = []
+            context['show_departement_section'] = False
+            context['departement_data_json'] = json.dumps([])
+        else:
+            context['show_departement_section'] = True
+            if is_admin_or_pasteur:
+                analyse_departement = Departement.objects.annotate(
+                    total=Count('membre'),
+                    actifs=Count('membre', filter=Q(membre__statut='actif'))
+                )
+            else:
+                departement = self.get_user_departement()
+                if departement:
+                    analyse_departement = Departement.objects.filter(id=departement.id).annotate(
+                        total=Count('membre'),
+                        actifs=Count('membre', filter=Q(membre__statut='actif'))
+                    )
+                else:
+                    analyse_departement = []
+            
+            context['analyse_departement'] = analyse_departement
+            
+            # Préparer JSON pour graphique
+            dept_json = []
+            for dept in analyse_departement:
+                dept_json.append({
+                    'nom': dept.nom,
+                    'total': dept.total,
+                    'actifs': dept.actifs
+                })
+            context['departement_data_json'] = json.dumps(dept_json)
         
         # Tendances de participation filtrées
         trois_mois_ago = timezone.now().date() - timedelta(days=90)
@@ -418,10 +525,12 @@ class AnalyseView(ProtectedDataAccessMixin, TemplateView):
             week_key = presence.culte.date.strftime('%Y-W%U')
             participations_par_semaine[week_key] += 1
         
-        context['participations_par_semaine'] = [
+        trends_list = [
             {'semaine': week, 'count': count}
             for week, count in sorted(participations_par_semaine.items())
         ]
+        context['participations_par_semaine'] = trends_list
+        context['participation_trends_json'] = json.dumps(trends_list)
         
         return context
 
@@ -626,3 +735,91 @@ class PresenceToggleView(LoginRequiredMixin, View):
         presence.culte.mettre_a_jour_nombre_participants()
         
         return redirect('eglise:culte_presence', culte_id=presence.culte.id)
+
+
+class MembresTotalListView(ProtectedDataAccessMixin, ListView):
+    """Liste de tous les membres"""
+    model = Membre
+    template_name = 'eglise/membre_list.html'
+    context_object_name = 'membres'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = Membre.objects.all()
+        # Appliquer le filtrage selon le rôle de l'utilisateur
+        queryset = self.get_filtered_queryset(queryset)
+        return queryset.order_by('nom', 'prenom')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_user_context())
+        context['tribus'] = self.get_filtered_tribus()
+        context['departements'] = self.get_filtered_departements()
+        context['page_title'] = 'Tous les Membres'
+        return context
+
+
+class MembresActifsListView(ProtectedDataAccessMixin, ListView):
+    """Liste des membres actifs"""
+    model = Membre
+    template_name = 'eglise/membre_list.html'
+    context_object_name = 'membres'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = Membre.objects.filter(statut='actif')
+        # Appliquer le filtrage selon le rôle de l'utilisateur
+        queryset = self.get_filtered_queryset(queryset)
+        return queryset.order_by('nom', 'prenom')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_user_context())
+        context['tribus'] = self.get_filtered_tribus()
+        context['departements'] = self.get_filtered_departements()
+        context['page_title'] = 'Membres Actifs'
+        return context
+
+
+class MembresNouveauxListView(ProtectedDataAccessMixin, ListView):
+    """Liste des nouveaux membres"""
+    model = Membre
+    template_name = 'eglise/membre_list.html'
+    context_object_name = 'membres'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = Membre.objects.filter(statut='nouveau')
+        # Appliquer le filtrage selon le rôle de l'utilisateur
+        queryset = self.get_filtered_queryset(queryset)
+        return queryset.order_by('nom', 'prenom')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_user_context())
+        context['tribus'] = self.get_filtered_tribus()
+        context['departements'] = self.get_filtered_departements()
+        context['page_title'] = 'Nouveaux Membres'
+        return context
+
+
+class MbresSortiListView(ProtectedDataAccessMixin, ListView):
+    """Liste des membres sortis"""
+    model = Membre
+    template_name = 'eglise/membre_list.html'
+    context_object_name = 'membres'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = Membre.objects.filter(statut='sorti')
+        # Appliquer le filtrage selon le rôle de l'utilisateur
+        queryset = self.get_filtered_queryset(queryset)
+        return queryset.order_by('nom', 'prenom')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_user_context())
+        context['tribus'] = self.get_filtered_tribus()
+        context['departements'] = self.get_filtered_departements()
+        context['page_title'] = 'Membres Sortis'
+        return context

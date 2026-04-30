@@ -1,10 +1,10 @@
 {% extends 'eglise/base.html' %}
 
-{% block title %}Liste des Membres{% endblock %}
+{% block title %}{% if page_title %}{{ page_title }}{% else %}Liste des Membres{% endif %}{% endblock %}
 
 {% block content %}
 <div class="card">
-    <h2>👥 Liste des Membres</h2>
+    <h2>👥 {% if page_title %}{{ page_title }}{% else %}Liste des Membres{% endif %}</h2>
     
     <div style="margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
         <h3 style="margin-bottom: 10px;">Filtres</h3>

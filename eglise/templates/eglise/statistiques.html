@@ -9,91 +9,209 @@
 
 <div class="grid">
     <div class="card">
-        <h2>🔝 Top 10 Participants</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Rang</th>
-                    <th>Nom & Prénom</th>
-                    <th>Participations</th>
-                    <th>Taux</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for membre in top_participants %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ membre.nom_complet }}</td>
-                    <td>{{ membre.participations }}</td>
-                    <td>{{ membre.taux_participation }}%</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4">Aucune donnée de participation</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <h2>� Participation par Mois (3 derniers mois)</h2>
+        <canvas id="cultsChart" style="max-height: 300px;"></canvas>
     </div>
     
     <div class="card">
-        <h2>📊 Participation par Mois (3 derniers mois)</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Mois</th>
-                    <th>Cultes</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for data in cultes_par_mois %}
-                <tr>
-                    <td>{{ data.month }}</td>
-                    <td>
-                        <div style="background: #667eea; color: white; padding: 5px 10px; border-radius: 3px; text-align: center;">
-                            {{ data.count }}
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="2">Aucune donnée</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <h2>📊 Taux de Participation Moyen</h2>
+        <canvas id="participationChart" style="max-height: 300px;"></canvas>
     </div>
 </div>
 
 <div class="card">
-    <h2>📅 Évolution des Membres</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Total</th>
-                <th>Actifs</th>
-                <th>Nouveaux</th>
-                <th>Sortis</th>
-                <th>Taux Participation</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for stat in evolution_membres %}
-            <tr>
-                <td>{{ stat.date|date:"d/m/Y" }}</td>
-                <td><strong>{{ stat.nombre_total_membres }}</strong></td>
-                <td>{{ stat.nombre_membres_actifs }}</td>
-                <td>{{ stat.nombre_membres_nouveau }}</td>
-                <td>{{ stat.nombre_membres_sorti }}</td>
-                <td>{{ stat.taux_participation_moyen }}%</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6">Aucune donnée statistique enregistrée</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h2>📈 Évolution des Membres (derniers mois)</h2>
+    <canvas id="evolutionChart" style="max-height: 400px;"></canvas>
 </div>
+
+<div class="grid">
+    <div class="card">
+        <h2>🔝 Top 10 Participants</h2>
+        <canvas id="topParticipantsChart" style="max-height: 400px;"></canvas>
+    </div>
+</div>
+
+<script>
+    // Graphique des cultes par mois
+    const cultsCtx = document.getElementById('cultsChart').getContext('2d');
+    const cultsData = {{ cultes_par_mois|safe }};
+    
+    new Chart(cultsCtx, {
+        type: 'bar',
+        data: {
+            labels: cultsData.map(d => d.month),
+            datasets: [{
+                label: 'Nombre de cultes',
+                data: cultsData.map(d => d.count),
+                backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                borderColor: 'rgba(102, 126, 234, 1)',
+                borderWidth: 2,
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        font: { size: 12 }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+    
+    // Graphique d'évolution des membres
+    const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
+    const evolutionData = {{ evolution_membres_json|safe }};
+    
+    new Chart(evolutionCtx, {
+        type: 'line',
+        data: {
+            labels: evolutionData.map(d => d.date),
+            datasets: [
+                {
+                    label: 'Nombre total de membres',
+                    data: evolutionData.map(d => d.total),
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: 'rgba(102, 126, 234, 1)'
+                },
+                {
+                    label: 'Membres actifs',
+                    data: evolutionData.map(d => d.actifs),
+                    borderColor: 'rgba(76, 175, 80, 1)',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: 'rgba(76, 175, 80, 1)'
+                },
+                {
+                    label: 'Nouveaux membres',
+                    data: evolutionData.map(d => d.nouveau),
+                    borderColor: 'rgba(255, 152, 0, 1)',
+                    backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: 'rgba(255, 152, 0, 1)'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        font: { size: 12 }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Graphique Top Participants
+    const topCtx = document.getElementById('topParticipantsChart').getContext('2d');
+    const topData = {{ top_participants_json|safe }};
+    
+    new Chart(topCtx, {
+        type: 'horizontalBar',
+        data: {
+            labels: topData.map(d => d.nom_complet),
+            datasets: [{
+                label: 'Participations',
+                data: topData.map(d => d.participations),
+                backgroundColor: [
+                    'rgba(102, 126, 234, 0.8)',
+                    'rgba(118, 75, 162, 0.8)',
+                    'rgba(76, 175, 80, 0.8)',
+                    'rgba(255, 152, 0, 0.8)',
+                    'rgba(244, 67, 54, 0.8)',
+                    'rgba(63, 81, 181, 0.8)',
+                    'rgba(233, 30, 99, 0.8)',
+                    'rgba(0, 150, 136, 0.8)',
+                    'rgba(156, 39, 176, 0.8)',
+                    'rgba(103, 58, 183, 0.8)'
+                ],
+                borderRadius: 5
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+    
+    // Graphique participation moyenne
+    const partCtx = document.getElementById('participationChart').getContext('2d');
+    const participationRates = {{ participation_rates_json|safe }};
+    
+    new Chart(partCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Présents', 'Absents'],
+            datasets: [{
+                data: [participationRates.presents, participationRates.absents],
+                backgroundColor: [
+                    'rgba(76, 175, 80, 0.8)',
+                    'rgba(244, 67, 54, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(76, 175, 80, 1)',
+                    'rgba(244, 67, 54, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        font: { size: 12 }
+                    }
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}

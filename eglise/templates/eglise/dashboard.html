@@ -7,25 +7,33 @@
     <h2>📊 Tableau de Bord</h2>
     
     <div style="display: flex; flex-wrap: wrap; justify-content: space-around;">
-        <div class="stat-box">
-            <div class="number">{{ total_membres }}</div>
-            <div class="label">Membres Total</div>
-        </div>
+        <a href="{% url 'eglise:membres_total' %}" style="text-decoration: none; color: inherit; cursor: pointer;">
+            <div class="stat-box" style="transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                <div class="number">{{ total_membres }}</div>
+                <div class="label">Membres Total</div>
+            </div>
+        </a>
         
-        <div class="stat-box" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">
-            <div class="number">{{ membres_actifs }}</div>
-            <div class="label">Membres Actifs</div>
-        </div>
+        <a href="{% url 'eglise:membres_actifs' %}" style="text-decoration: none; color: inherit; cursor: pointer;">
+            <div class="stat-box" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                <div class="number">{{ membres_actifs }}</div>
+                <div class="label">Membres Actifs</div>
+            </div>
+        </a>
         
-        <div class="stat-box" style="background: linear-gradient(135deg, #FF9800 0%, #e68900 100%);">
-            <div class="number">{{ membres_nouveau }}</div>
-            <div class="label">Nouveaux Membres</div>
-        </div>
+        <a href="{% url 'eglise:membres_nouveaux' %}" style="text-decoration: none; color: inherit; cursor: pointer;">
+            <div class="stat-box" style="background: linear-gradient(135deg, #FF9800 0%, #e68900 100%); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                <div class="number">{{ membres_nouveau }}</div>
+                <div class="label">Nouveaux Membres</div>
+            </div>
+        </a>
         
-        <div class="stat-box" style="background: linear-gradient(135deg, #F44336 0%, #da190b 100%);">
-            <div class="number">{{ membres_sorti }}</div>
-            <div class="label">Membres Sortis</div>
-        </div>
+        <a href="{% url 'eglise:membres_sortis' %}" style="text-decoration: none; color: inherit; cursor: pointer;">
+            <div class="stat-box" style="background: linear-gradient(135deg, #F44336 0%, #da190b 100%); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                <div class="number">{{ membres_sorti }}</div>
+                <div class="label">Membres Sortis</div>
+            </div>
+        </a>
         
         <div class="stat-box" style="background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);">
             <div class="number">{{ taux_participation_moyen }}%</div>
@@ -35,6 +43,7 @@
 </div>
 
 <div class="grid">
+    {% if show_tribu_section %}
     <div class="card">
         <h2>📍 Membres par Tribu</h2>
         <table>
@@ -58,7 +67,9 @@
             </tbody>
         </table>
     </div>
+    {% endif %}
     
+    {% if show_departement_section %}
     <div class="card">
         <h2>🏢 Membres par Département</h2>
         <table>
@@ -82,6 +93,7 @@
             </tbody>
         </table>
     </div>
+    {% endif %}
 </div>
 
 <div class="card">

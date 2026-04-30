@@ -138,19 +138,17 @@ class MembreForm(forms.ModelForm):
     
     class Meta:
         model = Membre
-        fields = ['nom', 'prenom', 'email', 'telephone', 'adresse', 'genre', 'date_naissance', 'tribu', 'departement', 'statut']
+        fields = ['nom', 'prenom', 'telephone', 'adresse', 'genre', 'statut']
         widgets = {
             'nom': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Nom'
+                'placeholder': 'Nom',
+                'required': True
             }),
             'prenom': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Prénom'
-            }),
-            'email': forms.EmailInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Email'
+                'placeholder': 'Prénom',
+                'required': True
             }),
             'telephone': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -161,16 +159,6 @@ class MembreForm(forms.ModelForm):
                 'placeholder': 'Adresse'
             }),
             'genre': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'date_naissance': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
-            'tribu': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'departement': forms.Select(attrs={
                 'class': 'form-control'
             }),
             'statut': forms.Select(attrs={
