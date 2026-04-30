@@ -25,4 +25,8 @@ urlpatterns = [
     # Gestion de la présence par culte
     path('culte/<int:culte_id>/presence/', views.CultePresenceListView.as_view(), name='culte_presence'),
     path('presence/<int:presence_id>/toggle/', views.PresenceToggleView.as_view(), name='presence_toggle'),
+    
+    # API endpoints pour modifier et supprimer les membres
+    path('api/membres/update/', views.MembreUpdateAPIView.as_view(), name='api_membre_update'),
+    path('api/membres/<int:membre_id>/delete/', views.MembreDeleteAPIView.as_view(), name='api_membre_delete'),
 ]

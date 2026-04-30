@@ -6,6 +6,21 @@
 <div class="card">
     <h2>👥 {% if page_title %}{{ page_title }}{% else %}Liste des Membres{% endif %}</h2>
     
+    {% if show_presence_graphs %}
+    <!-- Graphes comparatifs pour responsables et patriarches -->
+    <div class="grid" style="margin-bottom: 30px;">
+        <div class="card">
+            <h3>📊 Présence par Membre</h3>
+            <canvas id="presenceChart" style="max-height: 300px;"></canvas>
+        </div>
+        
+        <div class="card">
+            <h3>📈 Taux de Participation</h3>
+            <canvas id="tauxChart" style="max-height: 300px;"></canvas>
+        </div>
+    </div>
+    {% endif %}
+    
     <div style="margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
         <h3 style="margin-bottom: 10px;">Filtres</h3>
         <form method="get" style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -53,7 +68,9 @@
                 <th>Tribu</th>
                 <th>Département</th>
                 <th>Statut</th>
-                <th>Participation</th>
+                <th>Présences</th>
+                <th>Taux</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -69,11 +86,20 @@
                         {{ membre.get_statut_display }}
                     </span>
                 </td>
-                <td>{{ membre.taux_participation }}%</td>
+                <td>{{ membre.presences_count|default:0 }}</td>
+                <td>
+                    <div style="background: linear-gradient(to right, #4CAF50 {{ membre.taux_participation }}%, #e0e0e0 {{ membre.taux_participation }}%); padding: 5px 10px; border-radius: 3px; color: white; font-weight: bold; width: 60px; text-align: center;">
+                        {{ membre.taux_participation }}%
+                    </div>
+                </td>
+                <td style="white-space: nowrap;">
+                    <button class="btn-edit" onclick="editMembre({{ membre.id }}, '{{ membre.nom }}', '{{ membre.prenom }}', '{{ membre.email }}', '{{ membre.telephone }}', '{{ membre.statut }}')" style="padding: 5px 10px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; margin-right: 5px;">✏️ Modifier</button>
+                    <button class="btn-delete" onclick="deleteMembre({{ membre.id }}, '{{ membre.nom_complet }}')" style="padding: 5px 10px; background: #f44336; color: white; border: none; border-radius: 3px; cursor: pointer;">🗑️ Supprimer</button>
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" style="text-align: center; padding: 20px;">Aucun membre trouvé</td>
+                <td colspan="9" style="text-align: center; padding: 20px;">Aucun membre trouvé</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -96,8 +122,67 @@
     {% endif %}
 </div>
 
+<!-- Modal de modification -->
+<div id="editModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4);">
+    <div style="background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; border-radius: 5px; width: 90%; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <span onclick="closeEditModal()" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        <h2>Modifier les informations du membre</h2>
+        <form id="editForm">
+            {% csrf_token %}
+            <input type="hidden" id="membreId" name="membre_id">
+            
+            <div style="margin-bottom: 15px;">
+                <label for="nom">Nom:</label>
+                <input type="text" id="nom" name="nom" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label for="prenom">Prénom:</label>
+                <input type="text" id="prenom" name="prenom" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label for="telephone">Téléphone:</label>
+                <input type="text" id="telephone" name="telephone" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label for="statut">Statut:</label>
+                <select id="statut" name="statut" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                    <option value="nouveau">Nouveau</option>
+                    <option value="actif">Actif</option>
+                    <option value="inactif">Inactif</option>
+                    <option value="sorti">Sorti</option>
+                </select>
+            </div>
+            
+            <div style="text-align: right;">
+                <button type="button" onclick="closeEditModal()" style="padding: 8px 16px; background: #999; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Annuler</button>
+                <button type="button" onclick="submitEditForm()" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div id="deleteModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4);">
+    <div style="background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; border-radius: 5px; width: 90%; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h2>Confirmer la suppression</h2>
+        <p>Êtes-vous sûr de vouloir supprimer <strong id="memberNameToDelete"></strong>?</p>
+        <div style="text-align: right;">
+            <button type="button" onclick="closeDeleteModal()" style="padding: 8px 16px; background: #999; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Annuler</button>
+            <button type="button" onclick="confirmDelete()" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Supprimer</button>
+        </div>
+    </div>
+</div>
+
 <style>
-    select, input[type="text"] {
+    select, input[type="text"], input[type="email"] {
         padding: 8px;
         border: 1px solid #ddd;
         border-radius: 4px;
@@ -108,5 +193,178 @@
         font-weight: bold;
         margin-right: 5px;
     }
+    
+    .badge {
+        padding: 4px 8px;
+        border-radius: 3px;
+        color: white;
+        font-weight: bold;
+    }
+    
+    .badge.actif {
+        background: #4CAF50;
+    }
+    
+    .badge.inactif {
+        background: #FF9800;
+    }
+    
+    .badge.nouveau {
+        background: #2196F3;
+    }
+    
+    .badge.sorti {
+        background: #f44336;
+    }
 </style>
+
+<script>
+    let deleteMembreId = null;
+    
+    function editMembre(id, nom, prenom, email, telephone, statut) {
+        document.getElementById('membreId').value = id;
+        document.getElementById('nom').value = nom;
+        document.getElementById('prenom').value = prenom;
+        document.getElementById('email').value = email;
+        document.getElementById('telephone').value = telephone;
+        document.getElementById('statut').value = statut;
+        document.getElementById('editModal').style.display = 'block';
+    }
+    
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+    
+    function submitEditForm() {
+        const form = document.getElementById('editForm');
+        const formData = new FormData(form);
+        
+        fetch('/api/membres/update/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Membre modifié avec succès');
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.message);
+            }
+        })
+        .catch(error => alert('Erreur: ' + error));
+        
+        closeEditModal();
+    }
+    
+    function deleteMembre(id, name) {
+        deleteMembreId = id;
+        document.getElementById('memberNameToDelete').textContent = name;
+        document.getElementById('deleteModal').style.display = 'block';
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+        deleteMembreId = null;
+    }
+    
+    function confirmDelete() {
+        if (deleteMembreId) {
+            // Faire une requête AJAX pour supprimer le membre
+            fetch(`/api/membres/${deleteMembreId}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Membre supprimé avec succès');
+                    location.reload();
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => alert('Erreur: ' + error));
+        }
+        closeDeleteModal();
+    }
+    
+    // Graphiques de présence
+    {% if show_presence_graphs %}
+    const presenceData = {{ presence_data|safe }};
+    const tauxData = {{ taux_data|safe }};
+    
+    if (presenceData && document.getElementById('presenceChart')) {
+        const presenceCtx = document.getElementById('presenceChart').getContext('2d');
+        new Chart(presenceCtx, {
+            type: 'bar',
+            data: {
+                labels: presenceData.labels,
+                datasets: [{
+                    label: 'Nombre de présences',
+                    data: presenceData.values,
+                    backgroundColor: 'rgba(76, 175, 80, 0.8)',
+                    borderColor: 'rgba(76, 175, 80, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: true }
+                },
+                scales: {
+                    x: { beginAtZero: true }
+                }
+            }
+        });
+    }
+    
+    if (tauxData && document.getElementById('tauxChart')) {
+        const tauxCtx = document.getElementById('tauxChart').getContext('2d');
+        new Chart(tauxCtx, {
+            type: 'bar',
+            data: {
+                labels: tauxData.labels,
+                datasets: [{
+                    label: 'Taux de participation (%)',
+                    data: tauxData.values,
+                    backgroundColor: 'rgba(33, 150, 243, 0.8)',
+                    borderColor: 'rgba(33, 150, 243, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: true }
+                },
+                scales: {
+                    x: { beginAtZero: true, max: 100 }
+                }
+            }
+        });
+    }
+    {% endif %}
+    
+    window.onclick = function(event) {
+        let modal = document.getElementById("editModal");
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+        modal = document.getElementById("deleteModal");
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
 {% endblock %}

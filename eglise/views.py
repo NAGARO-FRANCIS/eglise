@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Count, Q, Avg
 from django.utils import timezone
+from django.http import JsonResponse
 from datetime import timedelta
 from collections import defaultdict
 import json
@@ -197,7 +198,26 @@ def get_user_profile(user):
 
 class DashboardView(ProtectedDataAccessMixin, TemplateView):
     """Vue du tableau de bord avec les statistiques principales"""
-    template_name = 'eglise/dashboard.html'
+    template_name = 'eglise/dashboard_complet.html'
+    
+    def get_template_names(self):
+        """Choisir le template selon le rôle de l'utilisateur"""
+        user = self.request.user
+        user_role = None
+        try:
+            if user.is_superuser:
+                user_role = 'admin'
+            else:
+                user_role = user.profile.role
+        except:
+            pass
+        
+        # Pour les patriarches et responsables: utiliser le template simple
+        if user_role in ['patriarche', 'responsable']:
+            return ['eglise/dashboard_simple.html']
+        
+        # Pour le pasteur et l'admin: utiliser le template complet avec graphiques
+        return [self.template_name]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -229,18 +249,29 @@ class DashboardView(ProtectedDataAccessMixin, TemplateView):
         else:
             context['show_tribu_section'] = True
             if is_admin_or_pasteur:
-                context['membres_par_tribu'] = Tribu.objects.annotate(
+                tribu_data = Tribu.objects.annotate(
                     nombre=Count('membre', filter=Q(membre__statut='actif'))
                 ).order_by('-nombre')
             else:
                 # Patriarche voit sa tribu
                 tribu = self.get_user_tribu()
                 if tribu:
-                    context['membres_par_tribu'] = Tribu.objects.filter(id=tribu.id).annotate(
+                    tribu_data = Tribu.objects.filter(id=tribu.id).annotate(
                         nombre=Count('membre', filter=Q(membre__statut='actif'))
                     )
                 else:
-                    context['membres_par_tribu'] = []
+                    tribu_data = []
+            
+            context['membres_par_tribu'] = tribu_data
+            
+            # Préparer les données JSON pour les graphiques
+            tribu_json_list = []
+            for tribu in tribu_data:
+                tribu_json_list.append({
+                    'nom': tribu.nom,
+                    'nombre': tribu.nombre
+                })
+            context['membres_par_tribu_json'] = json.dumps(tribu_json_list)
         
         # Statistiques par département (filtrées) - Ne pas afficher si l'utilisateur est patriarche
         if user_role == 'patriarche':
@@ -249,27 +280,97 @@ class DashboardView(ProtectedDataAccessMixin, TemplateView):
         else:
             context['show_departement_section'] = True
             if is_admin_or_pasteur:
-                context['membres_par_departement'] = Departement.objects.annotate(
+                dept_data = Departement.objects.annotate(
                     nombre=Count('membre', filter=Q(membre__statut='actif'))
                 ).order_by('-nombre')
             else:
                 # Responsable voit son département
                 departement = self.get_user_departement()
                 if departement:
-                    context['membres_par_departement'] = Departement.objects.filter(id=departement.id).annotate(
+                    dept_data = Departement.objects.filter(id=departement.id).annotate(
                         nombre=Count('membre', filter=Q(membre__statut='actif'))
                     )
                 else:
-                    context['membres_par_departement'] = []
+                    dept_data = []
+            
+            context['membres_par_departement'] = dept_data
+            
+            # Préparer les données JSON pour les graphiques
+            dept_json_list = []
+            for dept in dept_data:
+                dept_json_list.append({
+                    'nom': dept.nom,
+                    'nombre': dept.nombre
+                })
+            context['membres_par_departement_json'] = json.dumps(dept_json_list)
         
         # Cultes récents (tous les cultes, la participation est filtrée)
         cultes_recents = Culte.objects.all()[:10]
         context['cultes_recents'] = cultes_recents
         
         # Membres par statut (filtrés)
-        context['membres_par_statut'] = membres_filtered.values('statut').annotate(
+        membres_statut = membres_filtered.values('statut').annotate(
             nombre=Count('id')
         ).order_by('statut')
+        context['membres_par_statut'] = membres_statut
+        
+        # Préparer les données JSON pour les graphiques du statut
+        statut_json = []
+        for stat in membres_statut:
+            statut_json.append({
+                'statut': stat['statut'],
+                'nombre': stat['nombre']
+            })
+        context['membres_par_statut_json'] = json.dumps(statut_json)
+        
+        # Données JSON pour les graphiques (si admin ou pasteur)
+        if user_role in ['admin', 'pasteur']:
+            # Analyse par tribu pour graphique
+            analyse_tribu = Tribu.objects.annotate(
+                total=Count('membre'),
+                actifs=Count('membre', filter=Q(membre__statut='actif'))
+            )
+            tribu_json = []
+            for tribu in analyse_tribu:
+                tribu_json.append({
+                    'nom': tribu.nom,
+                    'total': tribu.total,
+                    'actifs': tribu.actifs
+                })
+            context['tribu_data_json'] = json.dumps(tribu_json)
+            
+            # Analyse par département pour graphique
+            analyse_departement = Departement.objects.annotate(
+                total=Count('membre'),
+                actifs=Count('membre', filter=Q(membre__statut='actif'))
+            )
+            dept_json = []
+            for dept in analyse_departement:
+                dept_json.append({
+                    'nom': dept.nom,
+                    'total': dept.total,
+                    'actifs': dept.actifs
+                })
+            context['departement_data_json'] = json.dumps(dept_json)
+            
+            # Tendances de participation
+            trois_mois_ago = timezone.now().date() - timedelta(days=90)
+            presences = Presence.objects.filter(
+                culte__date__gte=trois_mois_ago,
+                present=True,
+                membre__in=membres_filtered
+            ).select_related('culte')
+            
+            participations_par_semaine = defaultdict(int)
+            for presence in presences:
+                week_key = presence.culte.date.strftime('%Y-W%U')
+                participations_par_semaine[week_key] += 1
+            
+            trends_list = [
+                {'semaine': week, 'count': count}
+                for week, count in sorted(participations_par_semaine.items())
+            ]
+            context['participation_trends_json'] = json.dumps(trends_list)
         
         return context
 
@@ -338,6 +439,25 @@ class MembreListView(ProtectedDataAccessMixin, ListView):
 class StatistiquesView(ProtectedDataAccessMixin, TemplateView):
     """Vue des statistiques détaillées - filtrées selon le rôle"""
     template_name = 'eglise/statistiques.html'
+    
+    def get_template_names(self):
+        """Choisir le template selon le rôle de l'utilisateur"""
+        user = self.request.user
+        user_role = None
+        try:
+            if user.is_superuser:
+                user_role = 'admin'
+            else:
+                user_role = user.profile.role
+        except:
+            pass
+        
+        # Pour les patriarches et responsables: utiliser le template simple
+        if user_role in ['patriarche', 'responsable']:
+            return ['eglise/statistiques_simple.html']
+        
+        # Pour le pasteur et l'admin: utiliser le template complet avec graphiques
+        return [self.template_name]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -417,12 +537,50 @@ class StatistiquesView(ProtectedDataAccessMixin, TemplateView):
         }
         context['participation_rates_json'] = json.dumps(participation_rates)
         
+        # Données pour le template simple
+        context['participation_stats'] = {
+            'presents': presences_positives,
+            'absents': total_presences - presences_positives,
+            'presents_pct': (presences_positives / total_presences * 100) if total_presences > 0 else 0,
+            'absents_pct': ((total_presences - presences_positives) / total_presences * 100) if total_presences > 0 else 0,
+        }
+        
+        # Statistiques par statut avec pourcentages
+        total_membres = membres_filtered.count()
+        statuts = membres_filtered.values('statut').annotate(nombre=Count('id')).order_by('statut')
+        statuts_list = []
+        statut_display_map = dict(Membre.STATUT_CHOICES)
+        for stat in statuts:
+            stat['pourcentage'] = (stat['nombre'] / total_membres * 100) if total_membres > 0 else 0
+            stat['get_statut_display'] = statut_display_map.get(stat['statut'], stat['statut'])
+            statuts_list.append(stat)
+        context['membres_par_statut'] = statuts_list
+        
         return context
 
 
 class AnalyseView(ProtectedDataAccessMixin, TemplateView):
     """Vue d'analyse détaillée - filtrée selon le rôle"""
     template_name = 'eglise/analyse.html'
+    
+    def get_template_names(self):
+        """Choisir le template selon le rôle de l'utilisateur"""
+        user = self.request.user
+        user_role = None
+        try:
+            if user.is_superuser:
+                user_role = 'admin'
+            else:
+                user_role = user.profile.role
+        except:
+            pass
+        
+        # Pour les patriarches et responsables: utiliser le template simple
+        if user_role in ['patriarche', 'responsable']:
+            return ['eglise/analyse_simple.html']
+        
+        # Pour le pasteur et l'admin: utiliser le template complet avec graphiques
+        return [self.template_name]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -531,6 +689,10 @@ class AnalyseView(ProtectedDataAccessMixin, TemplateView):
         ]
         context['participations_par_semaine'] = trends_list
         context['participation_trends_json'] = json.dumps(trends_list)
+        
+        # Données pour le template simple: Évolution des membres
+        evolution_membres = Statistique.objects.all().order_by('date')
+        context['evolution_membres'] = evolution_membres
         
         return context
 
@@ -756,7 +918,46 @@ class MembresTotalListView(ProtectedDataAccessMixin, ListView):
         context['tribus'] = self.get_filtered_tribus()
         context['departements'] = self.get_filtered_departements()
         context['page_title'] = 'Tous les Membres'
+        
+        # Ajouter les données pour responsables et patriarches
+        try:
+            user_profile = self.request.user.profile
+            if user_profile.est_responsable() or user_profile.est_patriarche():
+                context['show_presence_graphs'] = True
+                context.update(self._add_presence_data(context['object_list']))
+        except:
+            pass
+        
         return context
+    
+    def _add_presence_data(self, membres):
+        """Ajoute les données de présence pour les graphes"""
+        presence_labels = []
+        presence_values = []
+        taux_labels = []
+        taux_values = []
+        
+        for membre in membres:
+            # Ajouter le compteur de présences
+            presences_count = Presence.objects.filter(membre=membre, present=True).count()
+            membre.presences_count = presences_count
+            
+            presence_labels.append(membre.nom_complet())
+            presence_values.append(presences_count)
+            
+            taux_labels.append(membre.nom_complet())
+            taux_values.append(membre.taux_participation())
+        
+        return {
+            'presence_data': json.dumps({
+                'labels': presence_labels,
+                'values': presence_values
+            }),
+            'taux_data': json.dumps({
+                'labels': taux_labels,
+                'values': taux_values
+            })
+        }
 
 
 class MembresActifsListView(ProtectedDataAccessMixin, ListView):
@@ -778,7 +979,46 @@ class MembresActifsListView(ProtectedDataAccessMixin, ListView):
         context['tribus'] = self.get_filtered_tribus()
         context['departements'] = self.get_filtered_departements()
         context['page_title'] = 'Membres Actifs'
+        
+        # Ajouter les données pour responsables et patriarches
+        try:
+            user_profile = self.request.user.profile
+            if user_profile.est_responsable() or user_profile.est_patriarche():
+                context['show_presence_graphs'] = True
+                context.update(self._add_presence_data(context['object_list']))
+        except:
+            pass
+        
         return context
+    
+    def _add_presence_data(self, membres):
+        """Ajoute les données de présence pour les graphes"""
+        presence_labels = []
+        presence_values = []
+        taux_labels = []
+        taux_values = []
+        
+        for membre in membres:
+            # Ajouter le compteur de présences
+            presences_count = Presence.objects.filter(membre=membre, present=True).count()
+            membre.presences_count = presences_count
+            
+            presence_labels.append(membre.nom_complet())
+            presence_values.append(presences_count)
+            
+            taux_labels.append(membre.nom_complet())
+            taux_values.append(membre.taux_participation())
+        
+        return {
+            'presence_data': json.dumps({
+                'labels': presence_labels,
+                'values': presence_values
+            }),
+            'taux_data': json.dumps({
+                'labels': taux_labels,
+                'values': taux_values
+            })
+        }
 
 
 class MembresNouveauxListView(ProtectedDataAccessMixin, ListView):
@@ -800,7 +1040,46 @@ class MembresNouveauxListView(ProtectedDataAccessMixin, ListView):
         context['tribus'] = self.get_filtered_tribus()
         context['departements'] = self.get_filtered_departements()
         context['page_title'] = 'Nouveaux Membres'
+        
+        # Ajouter les données pour responsables et patriarches
+        try:
+            user_profile = self.request.user.profile
+            if user_profile.est_responsable() or user_profile.est_patriarche():
+                context['show_presence_graphs'] = True
+                context.update(self._add_presence_data(context['object_list']))
+        except:
+            pass
+        
         return context
+    
+    def _add_presence_data(self, membres):
+        """Ajoute les données de présence pour les graphes"""
+        presence_labels = []
+        presence_values = []
+        taux_labels = []
+        taux_values = []
+        
+        for membre in membres:
+            # Ajouter le compteur de présences
+            presences_count = Presence.objects.filter(membre=membre, present=True).count()
+            membre.presences_count = presences_count
+            
+            presence_labels.append(membre.nom_complet())
+            presence_values.append(presences_count)
+            
+            taux_labels.append(membre.nom_complet())
+            taux_values.append(membre.taux_participation())
+        
+        return {
+            'presence_data': json.dumps({
+                'labels': presence_labels,
+                'values': presence_values
+            }),
+            'taux_data': json.dumps({
+                'labels': taux_labels,
+                'values': taux_values
+            })
+        }
 
 
 class MbresSortiListView(ProtectedDataAccessMixin, ListView):
@@ -822,4 +1101,151 @@ class MbresSortiListView(ProtectedDataAccessMixin, ListView):
         context['tribus'] = self.get_filtered_tribus()
         context['departements'] = self.get_filtered_departements()
         context['page_title'] = 'Membres Sortis'
+        
+        # Ajouter les données pour responsables et patriarches
+        try:
+            user_profile = self.request.user.profile
+            if user_profile.est_responsable() or user_profile.est_patriarche():
+                context['show_presence_graphs'] = True
+                context.update(self._add_presence_data(context['object_list']))
+        except:
+            pass
+        
         return context
+    
+    def _add_presence_data(self, membres):
+        """Ajoute les données de présence pour les graphes"""
+        presence_labels = []
+        presence_values = []
+        taux_labels = []
+        taux_values = []
+        
+        for membre in membres:
+            # Ajouter le compteur de présences
+            presences_count = Presence.objects.filter(membre=membre, present=True).count()
+            membre.presences_count = presences_count
+            
+            presence_labels.append(membre.nom_complet())
+            presence_values.append(presences_count)
+            
+            taux_labels.append(membre.nom_complet())
+            taux_values.append(membre.taux_participation())
+        
+        return {
+            'presence_data': json.dumps({
+                'labels': presence_labels,
+                'values': presence_values
+            }),
+            'taux_data': json.dumps({
+                'labels': taux_labels,
+                'values': taux_values
+            })
+        }
+
+
+# API Endpoints pour modifier et supprimer les membres
+
+class MembreUpdateAPIView(LoginRequiredMixin, View):
+    """API pour mettre à jour un membre"""
+    
+    def post(self, request):
+        """Modifie les informations d'un membre"""
+        import json
+        
+        try:
+            membre_id = request.POST.get('membre_id')
+            membre = Membre.objects.get(id=membre_id)
+            
+            # Vérifier que l'utilisateur a accès à ce membre
+            if not request.user.is_superuser:
+                user = request.user
+                if hasattr(user, 'profile'):
+                    profile = user.profile
+                    if profile.est_patriarche() and membre.tribu_id != profile.tribu_id:
+                        return JsonResponse({'success': False, 'message': 'Accès refusé'}, status=403)
+                    if profile.est_responsable() and membre.departement_id != profile.departement_id:
+                        return JsonResponse({'success': False, 'message': 'Accès refusé'}, status=403)
+            
+            # Mettre à jour les champs
+            membre.nom = request.POST.get('nom', membre.nom)
+            membre.prenom = request.POST.get('prenom', membre.prenom)
+            membre.email = request.POST.get('email', membre.email)
+            membre.telephone = request.POST.get('telephone', membre.telephone)
+            membre.statut = request.POST.get('statut', membre.statut)
+            membre.save()
+            
+            return JsonResponse({'success': True, 'message': 'Membre modifié avec succès'})
+        except Membre.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Membre non trouvé'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+class MembreDeleteAPIView(LoginRequiredMixin, View):
+    """API pour supprimer un membre"""
+    
+    def delete(self, request, membre_id):
+        """Supprime un membre"""
+        try:
+            membre = Membre.objects.get(id=membre_id)
+            
+            # Vérifier que l'utilisateur a accès à ce membre
+            if not request.user.is_superuser:
+                user = request.user
+                if hasattr(user, 'profile'):
+                    profile = user.profile
+                    if profile.est_patriarche() and membre.tribu_id != profile.tribu_id:
+                        return JsonResponse({'success': False, 'message': 'Accès refusé'}, status=403)
+                    if profile.est_responsable() and membre.departement_id != profile.departement_id:
+                        return JsonResponse({'success': False, 'message': 'Accès refusé'}, status=403)
+            
+            nom_complet = membre.nom_complet()
+            membre.delete()
+            
+            return JsonResponse({'success': True, 'message': f'{nom_complet} a été supprimé'})
+        except Membre.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Membre non trouvé'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_user_context())
+        context['tribus'] = self.get_filtered_tribus()
+        context['departements'] = self.get_filtered_departements()
+        context['page_title'] = 'Membres Sortis'
+        
+        # Ajouter les données pour responsables et patriarches
+        user_profile = self.request.user.profile
+        if user_profile.est_responsable() or user_profile.est_patriarche():
+            context['show_presence_graphs'] = True
+            context.update(self._add_presence_data(context['object_list']))
+        
+        return context
+    
+    def _add_presence_data(self, membres):
+        """Ajoute les données de présence pour les graphes"""
+        presence_labels = []
+        presence_values = []
+        taux_labels = []
+        taux_values = []
+        
+        for membre in membres:
+            # Ajouter le compteur de présences
+            presences_count = Presence.objects.filter(membre=membre, present=True).count()
+            membre.presences_count = presences_count
+            
+            presence_labels.append(membre.nom_complet())
+            presence_values.append(presences_count)
+            
+            taux_labels.append(membre.nom_complet())
+            taux_values.append(membre.taux_participation())
+        
+        return {
+            'presence_data': json.dumps({
+                'labels': presence_labels,
+                'values': presence_values
+            }),
+            'taux_data': json.dumps({
+                'labels': taux_labels,
+                'values': taux_values
+            })
+        }

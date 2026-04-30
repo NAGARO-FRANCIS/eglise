@@ -44,23 +44,19 @@
 
 <div class="grid">
     <div class="card">
-        <h2>👥 Répartition par Statut</h2>
-        <canvas id="statutChart" style="max-height: 300px;"></canvas>
+        <h2>📍 Analyse par Tribu</h2>
+        <canvas id="tribuChart" style="max-height: 400px;"></canvas>
     </div>
     
-    {% if show_tribu_section %}
     <div class="card">
-        <h2>📍 Répartition par Tribu</h2>
-        <canvas id="tribuChart" style="max-height: 300px;"></canvas>
+        <h2>🏢 Analyse par Département</h2>
+        <canvas id="departementChart" style="max-height: 400px;"></canvas>
     </div>
-    {% endif %}
-    
-    {% if show_departement_section %}
-    <div class="card">
-        <h2>🏢 Répartition par Département</h2>
-        <canvas id="departementChart" style="max-height: 300px;"></canvas>
-    </div>
-    {% endif %}
+</div>
+
+<div class="card">
+    <h2>📊 Tendances de Participation (par Semaine)</h2>
+    <canvas id="participationTrendsChart" style="max-height: 400px;"></canvas>
 </div>
 
 <div class="card">
@@ -84,7 +80,7 @@
                 <td>{{ culte.theme|default:"N/A" }}</td>
                 <td>{{ culte.predicateur|default:"N/A" }}</td>
                 <td><strong>{{ culte.nombre_participants }}</strong></td>
-                <td><a href="{% url 'eglise:culte_presence' culte.id %}" style="padding: 6px 12px; background: #667eea; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">Gérer</a></td>
+                <td><a href="{% url 'eglise:culte_presence' culte.id %}" style="padding: 6px 12px; background: #667eea; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">Gérer présence</a></td>
             </tr>
             {% empty %}
             <tr>
@@ -95,55 +91,53 @@
     </table>
 </div>
 
+<div class="card">
+    <h2>👥 Répartition par Statut</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Statut</th>
+                <th>Nombre</th>
+                <th>Pourcentage</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in membres_par_statut %}
+            <tr>
+                <td>
+                    <span class="badge {% if stat.statut %}{{ stat.statut }}{% endif %}">
+                        {{ stat.statut|title }}
+                    </span>
+                </td>
+                <td>{{ stat.nombre }}</td>
+                <td>
+                    {% if total_membres > 0 %}
+                        {{ stat.nombre|add:0 }}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">Aucun membre enregistré</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
 <script>
-    // Graphique de répartition par statut
-    const statutCtx = document.getElementById('statutChart').getContext('2d');
-    const statutData = {{ membres_par_statut_json|safe }};
-    
-    new Chart(statutCtx, {
-        type: 'doughnut',
-        data: {
-            labels: statutData.map(s => s.statut.charAt(0).toUpperCase() + s.statut.slice(1)),
-            datasets: [{
-                data: statutData.map(s => s.nombre),
-                backgroundColor: [
-                    'rgba(76, 175, 80, 0.8)',
-                    'rgba(255, 152, 0, 0.8)',
-                    'rgba(244, 67, 54, 0.8)',
-                    'rgba(158, 158, 158, 0.8)'
-                ],
-                borderColor: [
-                    'rgba(76, 175, 80, 1)',
-                    'rgba(255, 152, 0, 1)',
-                    'rgba(244, 67, 54, 1)',
-                    'rgba(158, 158, 158, 1)'
-                ],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'right'
-                }
-            }
-        }
-    });
-    
-    {% if show_tribu_section %}
     // Graphique des tribus
     const tribuCtx = document.getElementById('tribuChart').getContext('2d');
-    const tribuData = {{ membres_par_tribu_json|safe }};
+    const tribuData = {{ tribu_data_json|safe }};
     
     new Chart(tribuCtx, {
         type: 'doughnut',
         data: {
             labels: tribuData.map(t => t.nom),
             datasets: [{
-                data: tribuData.map(t => t.nombre),
+                data: tribuData.map(t => t.actifs),
                 backgroundColor: [
                     'rgba(102, 126, 234, 0.8)',
                     'rgba(118, 75, 162, 0.8)',
@@ -166,24 +160,25 @@
             plugins: {
                 legend: {
                     display: true,
-                    position: 'right'
+                    position: 'right',
+                    labels: {
+                        font: { size: 12 }
+                    }
                 }
             }
         }
     });
-    {% endif %}
     
-    {% if show_departement_section %}
     // Graphique des départements
     const deptCtx = document.getElementById('departementChart').getContext('2d');
-    const deptData = {{ membres_par_departement_json|safe }};
+    const deptData = {{ departement_data_json|safe }};
     
     new Chart(deptCtx, {
         type: 'doughnut',
         data: {
             labels: deptData.map(d => d.nom),
             datasets: [{
-                data: deptData.map(d => d.nombre),
+                data: deptData.map(d => d.actifs),
                 backgroundColor: [
                     'rgba(102, 126, 234, 0.8)',
                     'rgba(118, 75, 162, 0.8)',
@@ -206,11 +201,54 @@
             plugins: {
                 legend: {
                     display: true,
-                    position: 'right'
+                    position: 'right',
+                    labels: {
+                        font: { size: 12 }
+                    }
                 }
             }
         }
     });
-    {% endif %}
+    
+    // Graphique des tendances de participation
+    const trendCtx = document.getElementById('participationTrendsChart').getContext('2d');
+    const trendData = {{ participation_trends_json|safe }};
+    
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: trendData.map(t => t.semaine),
+            datasets: [{
+                label: 'Présences',
+                data: trendData.map(t => t.count),
+                borderColor: 'rgba(76, 175, 80, 1)',
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: 'rgba(76, 175, 80, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        font: { size: 12 }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
 </script>
 {% endblock %}

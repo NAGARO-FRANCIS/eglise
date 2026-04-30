@@ -21,6 +21,9 @@ class UserProfile(models.Model):
     # Pour les responsables de département
     departement = models.ForeignKey('Departement', on_delete=models.SET_NULL, null=True, blank=True, related_name='responsables')
     
+    # Photo de profil
+    photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
+    
     date_creation = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -92,10 +95,11 @@ class Membre(models.Model):
     adresse = models.CharField(max_length=255, blank=True, null=True)
     genre = models.CharField(max_length=1, choices=GENRE_CHOICES, blank=True)
     date_naissance = models.DateField(blank=True, null=True)
+    photo = models.ImageField(upload_to='membres_photos/', blank=True, null=True)
     
     # Informations d'église
-    tribu = models.ForeignKey(Tribu, on_delete=models.SET_NULL, null=True)
-    departement = models.ForeignKey(Departement, on_delete=models.SET_NULL, null=True)
+    tribu = models.ForeignKey(Tribu, on_delete=models.SET_NULL, null=True, blank=True)
+    departement = models.ForeignKey(Departement, on_delete=models.SET_NULL, null=True, blank=True)
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='nouveau')
     date_adhesion = models.DateField(default=timezone.now)
     date_depart = models.DateField(blank=True, null=True)

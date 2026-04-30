@@ -1,0 +1,137 @@
+{% extends 'eglise/base.html' %}
+
+{% block title %}Analyse{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>🔍 Analyse Détaillée</h2>
+    <p>Vue simplifiée selon votre rôle</p>
+</div>
+
+{% if show_tribu_section %}
+<div class="card">
+    <h2>📍 Analyse de Ma Tribu</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Tribu</th>
+                <th>Total Membres</th>
+                <th>Membres Actifs</th>
+                <th>Taux d'Activité</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tribu in analyse_tribu %}
+            <tr>
+                <td><strong>{{ tribu.nom }}</strong></td>
+                <td>{{ tribu.total }}</td>
+                <td>{{ tribu.actifs }}</td>
+                <td>
+                    {% if tribu.total > 0 %}
+                        {% widthratio tribu.actifs tribu.total 100 %}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Aucune tribu disponible</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if show_departement_section %}
+<div class="card">
+    <h2>🏢 Analyse de Mon Département</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Département</th>
+                <th>Total Membres</th>
+                <th>Membres Actifs</th>
+                <th>Taux d'Activité</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dept in analyse_departement %}
+            <tr>
+                <td><strong>{{ dept.nom }}</strong></td>
+                <td>{{ dept.total }}</td>
+                <td>{{ dept.actifs }}</td>
+                <td>
+                    {% if dept.total > 0 %}
+                        {% widthratio dept.actifs dept.total 100 %}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Aucun département disponible</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>📊 Tendances de Participation (par Semaine)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Semaine</th>
+                <th>Nombre de Présences</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trend in participations_par_semaine %}
+            <tr>
+                <td>{{ trend.semaine }}</td>
+                <td><strong>{{ trend.count }}</strong></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2">Aucune donnée de participation</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>📈 Évolution des Membres (derniers mois)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Actifs</th>
+                <th>Nouveaux</th>
+                <th>Sortis</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in evolution_membres %}
+            <tr>
+                <td>{{ stat.date|date:"d/m/Y" }}</td>
+                <td>{{ stat.nombre_total_membres }}</td>
+                <td>{{ stat.nombre_membres_actifs }}</td>
+                <td>{{ stat.nombre_membres_nouveau }}</td>
+                <td>{{ stat.nombre_membres_sorti }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">Aucune donnée d'évolution</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

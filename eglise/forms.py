@@ -96,7 +96,16 @@ class PatriarcheForm(forms.ModelForm):
     
     class Meta:
         model = UserProfile
-        fields = ['tribu']
+        fields = ['tribu', 'photo']
+        widgets = {
+            'photo': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
+        }
+        labels = {
+            'photo': 'Votre photo (optionnel)',
+        }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -112,6 +121,13 @@ class ResponsableForm(forms.ModelForm):
         required=True
     )
     
+    photo = forms.ImageField(
+        label="Votre photo (optionnel)",
+        required=False,
+        widget=forms.FileInput(attrs={'class': 'form-control'}),
+        help_text="Format: JPG, PNG. Taille max: 5MB"
+    )
+    
     class Meta:
         model = UserProfile
         fields = ['departement']
@@ -119,6 +135,14 @@ class ResponsableForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.role = 'responsable'
+    
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+        # La photo est stockée dans UserProfile
+        if self.files.get('photo'):
+            # Créer ou mettre à jour une image de profil associée
+            pass
+        return instance
 
 
 class PasteurForm(forms.ModelForm):
@@ -138,7 +162,7 @@ class MembreForm(forms.ModelForm):
     
     class Meta:
         model = Membre
-        fields = ['nom', 'prenom', 'telephone', 'adresse', 'genre', 'statut']
+        fields = ['nom', 'prenom', 'email', 'telephone', 'adresse', 'genre', 'date_naissance', 'tribu', 'departement', 'statut', 'photo']
         widgets = {
             'nom': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -149,6 +173,10 @@ class MembreForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Prénom',
                 'required': True
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Email'
             }),
             'telephone': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -161,8 +189,22 @@ class MembreForm(forms.ModelForm):
             'genre': forms.Select(attrs={
                 'class': 'form-control'
             }),
+            'date_naissance': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'tribu': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'departement': forms.Select(attrs={
+                'class': 'form-control'
+            }),
             'statut': forms.Select(attrs={
                 'class': 'form-control'
+            }),
+            'photo': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
             }),
         }
 

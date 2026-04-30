@@ -1,0 +1,122 @@
+{% extends 'eglise/base.html' %}
+
+{% block title %}Statistiques{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>📊 Mes Statistiques</h2>
+    <p>Données filtrées selon votre rôle</p>
+</div>
+
+<div class="card">
+    <h2>👥 Répartition par Statut</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Statut</th>
+                <th>Nombre</th>
+                <th>Pourcentage</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in membres_par_statut %}
+            <tr>
+                <td>
+                    <span class="badge {% if stat.statut == 'actif' %}actif{% elif stat.statut == 'nouveau' %}nouveau{% elif stat.statut == 'sorti' %}sorti{% else %}inactif{% endif %}">
+                        {{ stat.get_statut_display }}
+                    </span>
+                </td>
+                <td><strong>{{ stat.nombre }}</strong></td>
+                <td>{{ stat.pourcentage|floatformat:1 }}%</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">Aucune donnée disponible</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>📅 Participation par Mois (3 derniers mois)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Mois</th>
+                <th>Nombre de Cultes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for culte in cultes_par_mois %}
+            <tr>
+                <td>{{ culte.month }}</td>
+                <td><strong>{{ culte.count }}</strong></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2">Aucun culte enregistré</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>🔝 Top 10 Participants (3 derniers mois)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Rang</th>
+                <th>Nom</th>
+                <th>Participations</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in top_participants %}
+            <tr>
+                <td><strong>{{ forloop.counter }}</strong></td>
+                <td>{{ member.prenom }} {{ member.nom }}</td>
+                <td><strong>{{ member.participations }}</strong></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">Aucun participant</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>📈 Taux de Participation</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>État</th>
+                <th>Nombre</th>
+                <th>Pourcentage</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if participation_stats %}
+            <tr>
+                <td>Présents</td>
+                <td><strong>{{ participation_stats.presents }}</strong></td>
+                <td><strong>{{ participation_stats.presents_pct|floatformat:1 }}%</strong></td>
+            </tr>
+            <tr>
+                <td>Absents</td>
+                <td><strong>{{ participation_stats.absents }}</strong></td>
+                <td><strong>{{ participation_stats.absents_pct|floatformat:1 }}%</strong></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">Aucune donnée de participation</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends 'eglise/base.html' %}
+
+{% block title %}Tableau de bord - Gestion d'Église{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>📊 Tableau de Bord</h2>
+    
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-around;">
+        <a href="{% url 'eglise:membres_total' %}" style="text-decoration: none; color: inherit; cursor: pointer;">
+            <div class="stat-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                <div class="number">{{ total_membres }}</div>
+                <div class="label">Membres Total</div>
+            </div>
+        </a>
+        
+        <a href="{% url 'eglise:membres_actifs' %}" style="text-decoration: none; color: inherit; cursor: pointer;">
+            <div class="stat-box" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                <div class="number">{{ membres_actifs }}</div>
+                <div class="label">Membres Actifs</div>
+            </div>
+        </a>
+        
+        <a href="{% url 'eglise:membres_nouveaux' %}" style="text-decoration: none; color: inherit; cursor: pointer;">
+            <div class="stat-box" style="background: linear-gradient(135deg, #FF9800 0%, #e68900 100%); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                <div class="number">{{ membres_nouveau }}</div>
+                <div class="label">Nouveaux Membres</div>
+            </div>
+        </a>
+        
+        <a href="{% url 'eglise:membres_sortis' %}" style="text-decoration: none; color: inherit; cursor: pointer;">
+            <div class="stat-box" style="background: linear-gradient(135deg, #F44336 0%, #da190b 100%); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                <div class="number">{{ membres_sorti }}</div>
+                <div class="label">Membres Sortis</div>
+            </div>
+        </a>
+        
+        <div class="stat-box" style="background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);">
+            <div class="number">{{ taux_participation_moyen }}%</div>
+            <div class="label">Taux Participation</div>
+        </div>
+    </div>
+</div>
+
+{% if show_tribu_section %}
+<div class="card">
+    <h2>📍 Ma Tribu</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Nombre de Membres</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tribu in membres_par_tribu %}
+            <tr>
+                <td><a href="{% url 'eglise:tribu_membres' tribu.id %}" style="text-decoration: none; color: #667eea;">{{ tribu.nom }}</a></td>
+                <td><strong>{{ tribu.nombre }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if show_departement_section %}
+<div class="card">
+    <h2>🏢 Mon Département</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Nombre de Membres</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dept in membres_par_departement %}
+            <tr>
+                <td><a href="{% url 'eglise:departement_membres' dept.id %}" style="text-decoration: none; color: #667eea;">{{ dept.nom }}</a></td>
+                <td><strong>{{ dept.nombre }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>📅 Cultes Récents</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Participants</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for culte in cultes_recents %}
+            <tr>
+                <td>{{ culte.date|date:"d/m/Y" }}</td>
+                <td>{{ culte.description|truncatewords:10 }}</td>
+                <td><a href="{% url 'eglise:culte_presence' culte.id %}">{{ culte.nombre_participants }} participants</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">Aucun culte enregistré</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>👥 Répartition par Statut</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Statut</th>
+                <th>Nombre</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in membres_par_statut %}
+            <tr>
+                <td>
+                    <span class="badge {% if stat.statut == 'actif' %}actif{% elif stat.statut == 'nouveau' %}nouveau{% elif stat.statut == 'sorti' %}sorti{% else %}inactif{% endif %}">
+                        {{ stat.get_statut_display }}
+                    </span>
+                </td>
+                <td><strong>{{ stat.nombre }}</strong></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2">Aucune donnée</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
