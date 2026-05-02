@@ -251,4 +251,34 @@
         }
     });
 </script>
+
+{% if is_statistique_responsable %}
+<!-- Section pour le Département Statistique -->
+<div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764fa2 100%); color: white; border: none;">
+    <h2 style="margin-top: 0; color: white;">📊 Département Statistique</h2>
+    <p style="margin-top: 0; opacity: 0.9;">Enregistrez rapidement les données de participation aux cultes</p>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+        <a href="{% url 'eglise:culte_participation_add' %}" style="background: white; color: #667eea; padding: 15px 20px; text-decoration: none; border-radius: 6px; text-align: center; font-weight: bold; transition: all 0.3s; border: 2px solid white;">
+            ➕ Enregistrer une Participation
+        </a>
+        <a href="{% url 'eglise:culte_statistics' %}" style="background: rgba(255,255,255,0.2); color: white; padding: 15px 20px; text-decoration: none; border-radius: 6px; text-align: center; font-weight: bold; transition: all 0.3s; border: 2px solid white;">
+            📈 Voir les Statistiques
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{% if is_pasteur_or_admin %}
+<!-- Section pour Pasteur et Administrateur: Consultation des Statistiques -->
+<div class="card" style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; border: none;">
+    <h2 style="margin-top: 0; color: white;">📋 Consultation des Statistiques</h2>
+    <p style="margin-top: 0; opacity: 0.9;">Consultez les données de participation enregistrées (lecture seule)</p>
+    
+    <a href="{% url 'eglise:culte_statistiques_view' %}" style="background: white; color: #4caf50; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.3s; display: inline-block; border: 2px solid white;">
+        👁️ Voir toutes les statistiques
+    </a>
+</div>
+{% endif %}
+
 {% endblock %}

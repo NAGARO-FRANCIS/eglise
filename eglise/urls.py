@@ -33,6 +33,9 @@ urlpatterns = [
     path('cultes/<int:culte_id>/modifier/', culte_views.CulteUpdateView.as_view(), name='culte_update'),
     path('cultes/<int:culte_id>/supprimer/', culte_views.CulteDeleteView.as_view(), name='culte_delete'),
     path('cultes/statistiques/', culte_views.CulteStatisticsView.as_view(), name='culte_statistics'),
+    path('cultes/statistiques-view/', culte_views.CulteStatistiquesViewView.as_view(), name='culte_statistiques_view'),
+    path('cultes/participation/ajouter/', culte_views.CulteParticipationAddView.as_view(), name='culte_participation_add'),
+    path('cultes/ajouter-participation/', culte_views.AjouterParticipationDimanchemView.as_view(), name='ajouter_participation'),
     
     # API endpoints pour modifier et supprimer les membres
     path('api/membres/update/', views.MembreUpdateAPIView.as_view(), name='api_membre_update'),

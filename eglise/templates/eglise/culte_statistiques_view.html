@@ -1,0 +1,250 @@
+{% extends 'eglise/base.html' %}
+{% load static %}
+
+{% block title %}Consultation des Statistiques des Cultes{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="color: #667eea; margin-bottom: 20px;">📊 Statistiques des Cultes - Consultation</h1>
+    <p style="color: #666; font-size: 16px;">Consultez les données de participation enregistrées (lecture seule)</p>
+</div>
+
+<!-- Statistiques Globales -->
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764fa2 100%); color: white; border: none; text-align: center;">
+        <h3 style="margin: 0 0 10px 0; font-size: 14px;">📈 Total Cultes</h3>
+        <p style="font-size: 2.5em; margin: 10px 0; font-weight: bold;">{{ stats.total_cultes }}</p>
+    </div>
+    <div class="card" style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; border: none; text-align: center;">
+        <h3 style="margin: 0 0 10px 0; font-size: 14px;">👥 Total Participants</h3>
+        <p style="font-size: 2.5em; margin: 10px 0; font-weight: bold;">{{ stats.total_participants }}</p>
+    </div>
+    <div class="card" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; border: none; text-align: center;">
+        <h3 style="margin: 0 0 10px 0; font-size: 14px;">✨ Total Nouveaux</h3>
+        <p style="font-size: 2.5em; margin: 10px 0; font-weight: bold;">{{ stats.total_nouveaux }}</p>
+    </div>
+    <div class="card" style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; border: none; text-align: center;">
+        <h3 style="margin: 0 0 10px 0; font-size: 14px;">📊 Moyenne/Culte</h3>
+        <p style="font-size: 2.5em; margin: 10px 0; font-weight: bold;">{{ stats.average_participants }}</p>
+    </div>
+</div>
+
+<!-- Tableau détaillé des cultes -->
+<div class="card">
+    <h2 style="color: #333; margin-bottom: 20px;">📋 Liste Détaillée des Cultes</h2>
+    
+    {% if cultes_list %}
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: linear-gradient(135deg, #667eea 0%, #764fa2 100%); color: white;">
+                    <th style="padding: 12px; text-align: left; font-weight: bold;">📅 Date</th>
+                    <th style="padding: 12px; text-align: left; font-weight: bold;">⛪ Type</th>
+                    <th style="padding: 12px; text-align: left; font-weight: bold;">📝 Thème</th>
+                    <th style="padding: 12px; text-align: center; font-weight: bold;">👥 Participants</th>
+                    <th style="padding: 12px; text-align: center; font-weight: bold;">✨ Nouveaux</th>
+                    <th style="padding: 12px; text-align: left; font-weight: bold;">🎙️ Prédicateur</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for culte in cultes_list %}
+                <tr style="border-bottom: 1px solid #eee; {% cycle 'background: #f9f9f9;' 'background: white;' %}">
+                    <td style="padding: 12px;">
+                        <strong style="color: #667eea;">{{ culte.date|date:"d/m/Y" }}</strong>
+                    </td>
+                    <td style="padding: 12px;">
+                        <span style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+                            {{ culte.get_type_culte_display }}
+                        </span>
+                    </td>
+                    <td style="padding: 12px;">
+                        {{ culte.theme|default:"—" }}
+                    </td>
+                    <td style="padding: 12px; text-align: center;">
+                        <span style="background: #e8f5e9; color: #2e7d32; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 14px;">
+                            {{ culte.nombre_participants }}
+                        </span>
+                    </td>
+                    <td style="padding: 12px; text-align: center;">
+                        <span style="background: #fff3e0; color: #e65100; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 14px;">
+                            {{ culte.nombre_nouveaux }}
+                        </span>
+                    </td>
+                    <td style="padding: 12px;">
+                        {{ culte.predicateur|default:"—" }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 40px; background: #f5f5f5; border-radius: 6px;">
+        <p style="color: #999; font-size: 16px;">Aucune donnée de culte enregistrée pour le moment.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Graphiques (si disponibles) -->
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-top: 30px;">
+    <div class="card">
+        <h2>📈 Évolution de la Participation</h2>
+        <canvas id="evolutionChart" style="max-height: 400px;"></canvas>
+    </div>
+    
+    <div class="card">
+        <h2>📊 Participation par Type de Culte</h2>
+        <canvas id="typeChart" style="max-height: 400px;"></canvas>
+    </div>
+</div>
+
+<!-- Retour -->
+<div class="card" style="text-align: center; margin-top: 30px;">
+    <a href="{% url 'eglise:dashboard' %}" style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+        ← Retour au Tableau de Bord
+    </a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    // Graphique d'évolution
+    const evolutionData = {{ evolution_data_json|safe }};
+    if (evolutionData && evolutionData.length > 0) {
+        const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
+        const dates = evolutionData.map(d => d.date);
+        const participants = evolutionData.map(d => d.participants);
+        const nouveaux = evolutionData.map(d => d.nouveaux);
+        
+        new Chart(evolutionCtx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [
+                    {
+                        label: 'Participants',
+                        data: participants,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    },
+                    {
+                        label: 'Nouveaux',
+                        data: nouveaux,
+                        borderColor: '#ff9800',
+                        backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#ff9800',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Graphique par type de culte
+    const typeData = {{ type_data_json|safe }};
+    if (typeData && typeData.length > 0) {
+        const typeCtx = document.getElementById('typeChart').getContext('2d');
+        const types = typeData.map(d => d.type);
+        const counts = typeData.map(d => d.avg_participants);
+        
+        const colors = [
+            'rgba(102, 126, 234, 0.7)',
+            'rgba(118, 75, 162, 0.7)',
+            'rgba(76, 175, 80, 0.7)',
+            'rgba(255, 152, 0, 0.7)'
+        ];
+        const borderColors = [
+            'rgba(102, 126, 234, 1)',
+            'rgba(118, 75, 162, 1)',
+            'rgba(76, 175, 80, 1)',
+            'rgba(255, 152, 0, 1)'
+        ];
+        
+        new Chart(typeCtx, {
+            type: 'bar',
+            data: {
+                labels: types,
+                datasets: [{
+                    label: 'Moyenne Participants',
+                    data: counts,
+                    backgroundColor: colors.slice(0, types.length),
+                    borderColor: borderColors.slice(0, types.length),
+                    borderWidth: 2,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+<style>
+    table th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .card {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        padding: 20px;
+        background: white;
+    }
+    
+    .grid {
+        display: grid;
+        gap: 20px;
+    }
+</style>
+{% endblock %}

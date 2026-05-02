@@ -329,6 +329,16 @@ class DashboardView(ProtectedDataAccessMixin, TemplateView):
         # Données pour graphique de tendance d'assistance par type de culte
         context['attendance_trend_json'] = self.get_attendance_trend_by_culte_type()
         
+        # Données de tendance personnalisées pour patriarches et responsables
+        if user_role in ['patriarche', 'responsable']:
+            context['personalized_trend_json'] = self.get_personalized_attendance_trend(user, user_role)
+            
+            # Ajouter le nom du responsable
+            if user_role == 'patriarche' and hasattr(user, 'profile') and user.profile.tribu:
+                context['group_name'] = f"Tribu: {user.profile.tribu.nom}"
+            elif user_role == 'responsable' and hasattr(user, 'profile') and user.profile.departement:
+                context['group_name'] = f"Département: {user.profile.departement.nom}"
+        
         # Données JSON pour les graphiques (si admin ou pasteur)
         if user_role in ['admin', 'pasteur']:
             # Analyse par tribu pour graphique
@@ -377,6 +387,19 @@ class DashboardView(ProtectedDataAccessMixin, TemplateView):
                 for week, count in sorted(participations_par_semaine.items())
             ]
             context['participation_trends_json'] = json.dumps(trends_list)
+        
+        # Vérifier si c'est un responsable du département STATISTIQUE
+        context['is_statistique_responsable'] = False
+        if user_role == 'responsable':
+            try:
+                departement = user.profile.departement
+                if departement and departement.nom.upper() == 'STATISTIQUE':
+                    context['is_statistique_responsable'] = True
+            except:
+                pass
+        
+        # Vérifier si c'est un pasteur ou administrateur
+        context['is_pasteur_or_admin'] = (user_role in ['admin', 'pasteur'])
         
         return context
     
@@ -464,6 +487,95 @@ class DashboardView(ProtectedDataAccessMixin, TemplateView):
                 'borderWidth': 2,
                 'fill': True,
                 'tension': 0.4
+            })
+        
+        chart_data = {
+            'labels': labels,
+            'datasets': datasets
+        }
+        
+        return json.dumps(chart_data)
+    
+    def get_personalized_attendance_trend(self, user, user_role):
+        """Prépare les données de tendance personnalisée pour patriarche/responsable"""
+        # Obtenir les 60 derniers jours
+        sixty_days_ago = timezone.now().date() - timedelta(days=60)
+        
+        # Filtrer les membres selon le rôle
+        if user_role == 'patriarche':
+            tribu = user.profile.tribu
+            if not tribu:
+                return json.dumps({'labels': [], 'datasets': []})
+            membres = Membre.objects.filter(tribu=tribu, statut='actif')
+        else:  # responsable
+            departement = user.profile.departement
+            if not departement:
+                return json.dumps({'labels': [], 'datasets': []})
+            membres = Membre.objects.filter(departement=departement, statut='actif')
+        
+        # Récupérer les présences de ces membres pour les 60 derniers jours
+        presences = Presence.objects.filter(
+            present=True,
+            membre__in=membres,
+            culte__date__gte=sixty_days_ago
+        ).select_related('culte').order_by('culte__date')
+        
+        # Organiser les données par date
+        dates_set = set()
+        participants_by_date = defaultdict(int)
+        nouveaux_by_date = defaultdict(int)
+        
+        for presence in presences:
+            date_str = presence.culte.date.strftime('%Y-%m-%d')
+            dates_set.add(date_str)
+            participants_by_date[date_str] += 1
+        
+        # Pour les nouveaux convertis, on doit les estimer basé sur le culte
+        # (puisque nombre_nouveaux est au niveau culte, pas au niveau membre)
+        # On va afficher le total de nouveaux du culte pour ces dates
+        cultes = Culte.objects.filter(
+            date__gte=sixty_days_ago,
+            presence__membre__in=membres
+        ).distinct().values('date', 'nombre_nouveaux').order_by('date')
+        
+        for culte in cultes:
+            date_str = culte['date'].strftime('%Y-%m-%d')
+            nouveaux_by_date[date_str] = culte['nombre_nouveaux']
+        
+        # Trier les dates
+        sorted_dates = sorted(dates_set)
+        
+        # Préparer les données pour Chart.js
+        labels = [date for date in sorted_dates]
+        participants_data = [participants_by_date.get(date, 0) for date in sorted_dates]
+        nouveaux_data = [nouveaux_by_date.get(date, 0) for date in sorted_dates]
+        
+        datasets = [
+            {
+                'label': 'Participants de votre effectif',
+                'data': participants_data,
+                'borderColor': '#667eea',
+                'backgroundColor': 'rgba(102, 126, 234, 0.2)',
+                'borderWidth': 2,
+                'fill': True,
+                'tension': 0.4,
+                'pointRadius': 4,
+                'pointBackgroundColor': '#667eea'
+            }
+        ]
+        
+        # Ajouter les nouveaux convertis uniquement pour les patriarches
+        if user_role == 'patriarche':
+            datasets.append({
+                'label': 'Nouveaux convertis',
+                'data': nouveaux_data,
+                'borderColor': '#ff9800',
+                'backgroundColor': 'rgba(255, 152, 0, 0.2)',
+                'borderWidth': 2,
+                'fill': True,
+                'tension': 0.4,
+                'pointRadius': 4,
+                'pointBackgroundColor': '#ff9800'
             })
         
         chart_data = {
@@ -943,13 +1055,27 @@ class CultePresenceListView(ProtectedDataAccessMixin, TemplateView):
         # Récupérer tous les membres qui ne sont pas encore dans ce culte
         membres_non_enregistres = Membre.objects.exclude(
             presence__culte=culte
-        ).filter(statut='actif').order_by('nom', 'prenom')
+        ).filter(statut='actif')
+        
+        # Filtrer les membres selon le rôle de l'utilisateur
+        user_profile = request.user.profile if hasattr(request.user, 'profile') else None
+        if user_profile:
+            if user_profile.est_patriarche() and user_profile.tribu:
+                # Patriarche: voir uniquement les membres de sa tribu
+                membres_non_enregistres = membres_non_enregistres.filter(tribu=user_profile.tribu)
+            elif user_profile.est_responsable() and user_profile.departement:
+                # Responsable: voir uniquement les membres de son département
+                membres_non_enregistres = membres_non_enregistres.filter(departement=user_profile.departement)
+            # Pasteur: voit tous les membres (pas de filtrage supplémentaire)
+        
+        membres_non_enregistres = membres_non_enregistres.order_by('nom', 'prenom')
         
         context = {
             'culte': culte,
             'presences': presences,
             'membres_non_enregistres': membres_non_enregistres,
             'form': PresenceMembreSelectionForm(),
+            'user_role': user_profile.get_role_display() if user_profile else 'N/A',
         }
         
         return render(request, self.template_name, context)
@@ -964,6 +1090,17 @@ class CultePresenceListView(ProtectedDataAccessMixin, TemplateView):
         form = PresenceMembreSelectionForm(request.POST)
         if form.is_valid():
             membres = form.cleaned_data['membres']
+            
+            # Filtrer les membres selon le rôle de l'utilisateur (sécurité)
+            user_profile = request.user.profile if hasattr(request.user, 'profile') else None
+            if user_profile:
+                if user_profile.est_patriarche() and user_profile.tribu:
+                    # Patriarche: peut uniquement ajouter les membres de sa tribu
+                    membres = membres.filter(tribu=user_profile.tribu)
+                elif user_profile.est_responsable() and user_profile.departement:
+                    # Responsable: peut uniquement ajouter les membres de son département
+                    membres = membres.filter(departement=user_profile.departement)
+            
             for membre in membres:
                 # Créer la présence si elle n'existe pas déjà
                 Presence.objects.get_or_create(

@@ -21,6 +21,20 @@
         </div>
     </div>
     
+    <!-- Notification de rôle et filtrage -->
+    {% if user_role %}
+    <div style="background: #e3f2fd; border: 1px solid #90caf9; padding: 12px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #667eea;">
+        <strong>👤 Votre rôle: {{ user_role }}</strong>
+        {% if user_role == "Patriarche de Tribu" %}
+            <p style="margin: 8px 0 0 0; color: #1565c0; font-size: 14px;">ℹ️ Vous ne voyez que les membres de votre tribu.</p>
+        {% elif user_role == "Responsable de Département" %}
+            <p style="margin: 8px 0 0 0; color: #1565c0; font-size: 14px;">ℹ️ Vous ne voyez que les membres de votre département.</p>
+        {% elif user_role == "Pasteur" %}
+            <p style="margin: 8px 0 0 0; color: #1565c0; font-size: 14px;">ℹ️ Vous avez accès à tous les membres.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+    
     <!-- Formulaire pour ajouter des membres à la présence -->
     {% if membres_non_enregistres %}
     <div style="margin-bottom: 30px; background: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
@@ -28,13 +42,16 @@
         <form method="post" style="display: grid; gap: 15px;">
             {% csrf_token %}
             <div>
-                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Sélectionnez les membres à ajouter:</label>
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">Sélectionnez les membres à ajouter ({{ membres_non_enregistres.count }} membres disponibles):</label>
                 <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: white;">
                     {% for membre in membres_non_enregistres %}
                     <div style="margin-bottom: 10px;">
                         <label style="display: flex; align-items: center; cursor: pointer;">
                             <input type="checkbox" name="membres" value="{{ membre.id }}" style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
-                            <span>{{ membre.nom_complet }} ({{ membre.tribu.nom|default:"N/A" }})</span>
+                            <span>{{ membre.nom_complet }} 
+                                {% if membre.tribu %}<small style="color: #999;">(Tribu: {{ membre.tribu.nom }})</small>{% endif %}
+                                {% if membre.departement %}<small style="color: #999;">(Dpt: {{ membre.departement.nom }})</small>{% endif %}
+                            </span>
                         </label>
                     </div>
                     {% endfor %}
@@ -45,9 +62,6 @@
         </form>
     </div>
     {% endif %}
-    
-    <!-- Liste de présence -->
-    <h3 style="margin-bottom: 15px; color: #333;">📋 Présences enregistrées ({{ presences.count }})</h3>
     {% if presences %}
     <table>
         <thead>

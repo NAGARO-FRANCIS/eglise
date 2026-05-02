@@ -145,6 +145,7 @@ class Culte(models.Model):
     theme = models.CharField(max_length=255, blank=True, null=True)
     predicateur = models.CharField(max_length=100, blank=True, null=True)
     nombre_participants = models.IntegerField(default=0)
+    nombre_nouveaux = models.IntegerField(default=0)
     notes = models.TextField(blank=True, null=True)
     date_creation = models.DateTimeField(auto_now_add=True)
 

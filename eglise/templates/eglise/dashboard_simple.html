@@ -3,60 +3,133 @@
 {% block title %}Tableau de bord - Gestion d'Église{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h2>📊 Tableau de Bord</h2>
+<style>
+    .stat-box {
+        padding: 25px 20px;
+        border-radius: 12px;
+        text-align: center;
+        color: white;
+        margin: 10px;
+        min-width: 150px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        border: none;
+        transition: all 0.3s ease;
+    }
     
-    <div style="display: flex; flex-wrap: wrap; justify-content: space-around;">
-        <a href="{% url 'eglise:membres_total' %}" style="text-decoration: none; color: inherit; cursor: pointer;">
-            <div class="stat-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+    .stat-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-box .number {
+        font-size: 2.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .stat-box .label {
+        font-size: 0.95em;
+        opacity: 0.95;
+        font-weight: 500;
+    }
+    
+    .card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border-left: 4px solid #667eea;
+    }
+    
+    .card h2 {
+        color: #2c3e50;
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 1.4em;
+    }
+    
+    .card table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .card table thead {
+        background: linear-gradient(135deg, #f0f4ff 0%, #f8faff 100%);
+    }
+    
+    .card table th {
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #2c3e50;
+        border-bottom: 2px solid #e8ecf8;
+    }
+    
+    .card table td {
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .card table tbody tr:hover {
+        background: #f9fbff;
+    }
+</style>
+
+<div class="card">
+    <h2 style="color: #2c3e50; text-align: center; margin-bottom: 30px;">📊 Tableau de Bord</h2>
+    
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+        <a href="{% url 'eglise:membres_total' %}" style="text-decoration: none; color: inherit;">
+            <div class="stat-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <div class="number">{{ total_membres }}</div>
                 <div class="label">Membres Total</div>
             </div>
         </a>
         
-        <a href="{% url 'eglise:membres_actifs' %}" style="text-decoration: none; color: inherit; cursor: pointer;">
-            <div class="stat-box" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+        <a href="{% url 'eglise:membres_actifs' %}" style="text-decoration: none; color: inherit;">
+            <div class="stat-box" style="background: linear-gradient(135deg, #26c281 0%, #1fab89 100%);">
                 <div class="number">{{ membres_actifs }}</div>
                 <div class="label">Membres Actifs</div>
             </div>
         </a>
         
-        <a href="{% url 'eglise:membres_nouveaux' %}" style="text-decoration: none; color: inherit; cursor: pointer;">
-            <div class="stat-box" style="background: linear-gradient(135deg, #FF9800 0%, #e68900 100%); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+        <a href="{% url 'eglise:membres_nouveaux' %}" style="text-decoration: none; color: inherit;">
+            <div class="stat-box" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
                 <div class="number">{{ membres_nouveau }}</div>
                 <div class="label">Nouveaux Membres</div>
             </div>
         </a>
         
-        <a href="{% url 'eglise:membres_sortis' %}" style="text-decoration: none; color: inherit; cursor: pointer;">
-            <div class="stat-box" style="background: linear-gradient(135deg, #F44336 0%, #da190b 100%); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+        <a href="{% url 'eglise:membres_sortis' %}" style="text-decoration: none; color: inherit;">
+            <div class="stat-box" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
                 <div class="number">{{ membres_sorti }}</div>
                 <div class="label">Membres Sortis</div>
             </div>
         </a>
         
-        <div class="stat-box" style="background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);">
+        <div class="stat-box" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
             <div class="number">{{ taux_participation_moyen }}%</div>
-            <div class="label">Taux Participation</div>
+            <div class="label">Participation</div>
         </div>
     </div>
 </div>
 
 {% if show_tribu_section %}
-<div class="card">
-    <h2>📍 Ma Tribu</h2>
+<div class="card" style="border-left-color: #26c281;">
+    <h2 style="color: #26c281;">📍 Ma Tribu</h2>
     <table>
         <thead>
-            <tr>
-                <th>Nom</th>
-                <th>Nombre de Membres</th>
+            <tr style="background: linear-gradient(135deg, #e8f8f5 0%, #f0fdf4 100%);">
+                <th style="color: #26c281;">Nom</th>
+                <th style="color: #26c281;">Nombre de Membres</th>
             </tr>
         </thead>
         <tbody>
             {% for tribu in membres_par_tribu %}
             <tr>
-                <td><a href="{% url 'eglise:tribu_membres' tribu.id %}" style="text-decoration: none; color: #667eea;">{{ tribu.nom }}</a></td>
-                <td><strong>{{ tribu.nombre }}</strong></td>
+                <td><a href="{% url 'eglise:tribu_membres' tribu.id %}" style="text-decoration: none; color: #26c281; font-weight: 500;">{{ tribu.nom }}</a></td>
+                <td><strong style="color: #26c281; font-size: 1.1em;">{{ tribu.nombre }}</strong></td>
             </tr>
             {% endfor %}
         </tbody>
@@ -65,20 +138,20 @@
 {% endif %}
 
 {% if show_departement_section %}
-<div class="card">
-    <h2>🏢 Mon Département</h2>
+<div class="card" style="border-left-color: #3498db;">
+    <h2 style="color: #3498db;">🏢 Mon Département</h2>
     <table>
         <thead>
-            <tr>
-                <th>Nom</th>
-                <th>Nombre de Membres</th>
+            <tr style="background: linear-gradient(135deg, #ebf5fb 0%, #eaf2f8 100%);">
+                <th style="color: #3498db;">Nom</th>
+                <th style="color: #3498db;">Nombre de Membres</th>
             </tr>
         </thead>
         <tbody>
             {% for dept in membres_par_departement %}
             <tr>
-                <td><a href="{% url 'eglise:departement_membres' dept.id %}" style="text-decoration: none; color: #667eea;">{{ dept.nom }}</a></td>
-                <td><strong>{{ dept.nombre }}</strong></td>
+                <td><a href="{% url 'eglise:departement_membres' dept.id %}" style="text-decoration: none; color: #3498db; font-weight: 500;">{{ dept.nom }}</a></td>
+                <td><strong style="color: #3498db; font-size: 1.1em;">{{ dept.nombre }}</strong></td>
             </tr>
             {% endfor %}
         </tbody>
@@ -86,11 +159,11 @@
 </div>
 {% endif %}
 
-<div class="card">
-    <h2>📅 Cultes Récents</h2>
+<div class="card" style="border-left-color: #f39c12;">
+    <h2 style="color: #2c3e50;">📅 Cultes Récents</h2>
     <table>
         <thead>
-            <tr>
+            <tr style="background: linear-gradient(135deg, #fef5e7 0%, #fdf2e9 100%);">
                 <th>Date</th>
                 <th>Description</th>
                 <th>Participants</th>
@@ -112,46 +185,65 @@
     </table>
 </div>
 
-<div class="card">
-    <h2>👥 Répartition par Statut</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Statut</th>
-                <th>Nombre</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for stat in membres_par_statut %}
-            <tr>
-                <td>
-                    <span class="badge {% if stat.statut == 'actif' %}actif{% elif stat.statut == 'nouveau' %}nouveau{% elif stat.statut == 'sorti' %}sorti{% else %}inactif{% endif %}">
-                        {{ stat.get_statut_display }}
-                    </span>
-                </td>
-                <td><strong>{{ stat.nombre }}</strong></td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="2">Aucune donnée</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<div class="grid">
-    <div class="card">
-        <h2>⛪ Effectif par Type de Culte</h2>
-        <canvas id="attendanceTypeChart" style="max-height: 300px;"></canvas>
+<div class="card" style="border-left-color: #667eea;">
+    <h2 style="color: #2c3e50;">👥 Répartition par Statut</h2>
+    <div style="display: flex; justify-content: center; padding: 20px;">
+        <canvas id="statutChart" style="max-height: 350px; max-width: 450px;"></canvas>
     </div>
 </div>
 
-<div class="card">
-    <h2>📈 Tendance d'Assistance par Type de Culte</h2>
-    <canvas id="attendanceTrendChart" style="max-height: 400px;"></canvas>
+<div class="card" style="border-left-color: #9b59b6;">
+    <h2 style="color: #2c3e50;">⛪ Effectif par Type de Culte</h2>
+    <div style="display: flex; justify-content: center; padding: 20px;">
+        <canvas id="attendanceTypeChart" style="max-height: 350px; max-width: 600px;"></canvas>
+    </div>
 </div>
 
+{% if personalized_trend_json %}
+<!-- Graphique de tendance personnalisée pour Patriarche/Responsable -->
+<div class="card" style="border-left-color: #667eea; background: linear-gradient(to right, rgba(102, 126, 234, 0.05), transparent); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);">
+    <h2 style="color: #667eea; margin-top: 0; margin-bottom: 15px; font-size: 1.25em;">📊 Tendance d'Assistance de votre Effectif</h2>
+    {% if group_name %}
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em; display: inline-block;">
+        <strong>{{ group_name }}</strong> — 60 derniers jours
+    </div>
+    {% endif %}
+    <div style="padding: 20px; border-radius: 10px;">
+        <canvas id="personalizedTrendChart" style="max-height: 450px;"></canvas>
+    </div>
+</div>
+{% endif %}
+
+{% if is_statistique_responsable %}
+<!-- Section pour le Département Statistique -->
+<div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);">
+    <h2 style="margin-top: 0; color: white; margin-bottom: 15px;">📊 Gestion - Département Statistique</h2>
+    <p style="margin-bottom: 20px; opacity: 0.95; font-size: 0.95em;">Enregistrez les données de participation aux cultes pour générer les statistiques</p>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <a href="{% url 'eglise:culte_participation_add' %}" style="background: white; color: #667eea; padding: 18px 20px; text-decoration: none; border-radius: 8px; text-align: center; font-weight: 600; transition: all 0.3s; border: 2px solid white; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            ➕ Enregistrer Participation
+        </a>
+        <a href="{% url 'eglise:culte_statistics' %}" style="background: rgba(255,255,255,0.15); color: white; padding: 18px 20px; text-decoration: none; border-radius: 8px; text-align: center; font-weight: 600; transition: all 0.3s; border: 2px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; gap: 8px;">
+            📈 Gestion Cultes
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{% if is_pasteur_or_admin %}
+<!-- Section pour Pasteur et Administrateur: Consultation des Statistiques -->
+<div class="card" style="border-left-color: #f39c12; background: linear-gradient(to right, rgba(243, 156, 18, 0.05), transparent); box-shadow: 0 4px 15px rgba(243, 156, 18, 0.1);">
+    <h2 style="color: #f39c12; margin-top: 0; margin-bottom: 15px; font-size: 1.25em;">📊 Consultation des Statistiques</h2>
+    <p style="margin-bottom: 20px; color: #666; font-size: 0.95em;">Consultez les données de participation enregistrées (lecture seule)</p>
+    
+    <a href="{% url 'eglise:culte_statistiques_view' %}" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s; display: inline-block; border: none; box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);">
+        👁️ Voir toutes les statistiques
+    </a>
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
     // Graphique de comparaison des effectifs par type de culte
     const attendanceTypeCtx = document.getElementById('attendanceTypeChart').getContext('2d');
@@ -200,15 +292,16 @@
         }
     });
     
-    // Graphique de tendance d'assistance par type de culte
-    const attendanceTrendCtx = document.getElementById('attendanceTrendChart').getContext('2d');
-    const attendanceTrendData = {{ attendance_trend_json|safe }};
+    // Graphique personnalisé pour Patriarche/Responsable
+    {% if personalized_trend_json %}
+    const personalizedTrendCtx = document.getElementById('personalizedTrendChart').getContext('2d');
+    const personalizedTrendData = {{ personalized_trend_json|safe }};
     
-    new Chart(attendanceTrendCtx, {
+    new Chart(personalizedTrendCtx, {
         type: 'line',
         data: {
-            labels: attendanceTrendData.labels,
-            datasets: attendanceTrendData.datasets
+            labels: personalizedTrendData.labels,
+            datasets: personalizedTrendData.datasets
         },
         options: {
             responsive: true,
@@ -216,7 +309,9 @@
             plugins: {
                 legend: {
                     display: true,
-                    position: 'top'
+                    labels: {
+                        font: { size: 12, weight: 'bold' }
+                    }
                 }
             },
             scales: {
@@ -229,5 +324,6 @@
             }
         }
     });
+    {% endif %}
 </script>
 {% endblock %}

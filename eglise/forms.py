@@ -276,3 +276,35 @@ class CulteForm(forms.ModelForm):
             'nombre_participants': 'Nombre de personnes présentes *',
             'notes': 'Notes',
         }
+
+
+class ParticipationDimanchemForm(forms.ModelForm):
+    """Formulaire simplifié pour ajouter rapidement la participation au dimanche"""
+    
+    class Meta:
+        model = Culte
+        fields = ['date', 'nombre_participants', 'nombre_nouveaux']
+        widgets = {
+            'date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'required': True
+            }),
+            'nombre_participants': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: 5000',
+                'min': '0',
+                'required': True
+            }),
+            'nombre_nouveaux': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: 50',
+                'min': '0',
+                'required': True
+            }),
+        }
+        labels = {
+            'date': 'Date du dimanche *',
+            'nombre_participants': 'Nombre de participants *',
+            'nombre_nouveaux': 'Nombre de nouveaux *',
+        }
