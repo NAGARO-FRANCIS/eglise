@@ -50,6 +50,29 @@
         <h2>📊 Participation par Type de Culte</h2>
         <canvas id="typeChart" style="max-height: 400px;"></canvas>
     </div>
+    
+    <div class="card">
+        <h2>👥 Évolution des Nouveaux</h2>
+        <canvas id="newChart" style="max-height: 400px;"></canvas>
+    </div>
+</div>
+
+<!-- Graphiques des Serviteurs (Membres des Départements) -->
+<div class="card" style="background: linear-gradient(135deg, #26c281 0%, #1fab89 100%); color: white; padding: 25px; margin-bottom: 30px; border-radius: 8px;">
+    <h2 style="margin: 0 0 15px 0; color: white; font-size: 20px;">🙎 Gestion des Serviteurs (Membres des Départements)</h2>
+    <p style="margin: 0; color: rgba(255,255,255,0.9);">Tous les membres actifs des départements</p>
+</div>
+
+<div class="grid">
+    <div class="card">
+        <h2>📈 Évolution des Serviteurs</h2>
+        <canvas id="serviteursEvolutionChart" style="max-height: 400px;"></canvas>
+    </div>
+    
+    <div class="card">
+        <h2>🏢 Répartition des Serviteurs par Département</h2>
+        <canvas id="serviteursDeptChart" style="max-height: 400px;"></canvas>
+    </div>
 </div>
 
 <!-- Retour à la liste -->
@@ -96,112 +119,307 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
-    // Graphique d'évolution
+    // Données JSON récupérées du backend
     const evolutionData = {{ evolution_data_json|safe }};
+    const typeData = {{ type_data_json|safe }};
+    
+    console.log('📊 Données évolution:', evolutionData);
+    console.log('📊 Données type:', typeData);
+    
+    // Graphique d'évolution
     if (evolutionData && evolutionData.length > 0) {
-        const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
-        const dates = evolutionData.map(d => d.date);
-        const participants = evolutionData.map(d => d.participants);
-        
-        new Chart(evolutionCtx, {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [{
-                    label: 'Nombre de Participants',
-                    data: participants,
-                    borderColor: 'rgba(102, 126, 234, 1)',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    pointBackgroundColor: 'rgba(102, 126, 234, 1)',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: true,
-                        labels: {
-                            font: { size: 12, weight: 'bold' }
-                        }
-                    }
+        console.log('✅ Création du graphique d\'évolution');
+        const evolutionCtx = document.getElementById('evolutionChart');
+        if (evolutionCtx) {
+            const ctx = evolutionCtx.getContext('2d');
+            const dates = evolutionData.map(d => d.date);
+            const participants = evolutionData.map(d => d.participants);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Nombre de Participants',
+                        data: participants,
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1,
-                            callback: function(value) {
-                                return value;
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 12, weight: 'bold' }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return value;
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        } else {
+            console.error('❌ Canvas evolutionChart non trouvé');
+        }
+    } else {
+        console.warn('⚠️ Aucune donnée d\'évolution disponible');
     }
     
     // Graphique par type de culte
-    const typeData = {{ type_data_json|safe }};
     if (typeData && typeData.length > 0) {
-        const typeCtx = document.getElementById('typeChart').getContext('2d');
-        const types = typeData.map(d => d.type);
-        const counts = typeData.map(d => d.avg_participants);
-        
-        const colors = [
-            'rgba(102, 126, 234, 0.7)',
-            'rgba(118, 75, 162, 0.7)',
-            'rgba(76, 175, 80, 0.7)',
-            'rgba(255, 152, 0, 0.7)'
-        ];
-        const borderColors = [
-            'rgba(102, 126, 234, 1)',
-            'rgba(118, 75, 162, 1)',
-            'rgba(76, 175, 80, 1)',
-            'rgba(255, 152, 0, 1)'
-        ];
-        
-        new Chart(typeCtx, {
-            type: 'bar',
-            data: {
-                labels: types,
-                datasets: [{
-                    label: 'Moyenne de Participants',
-                    data: counts,
-                    backgroundColor: colors.slice(0, types.length),
-                    borderColor: borderColors.slice(0, types.length),
-                    borderWidth: 2,
-                    borderRadius: 5
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: true,
-                        labels: {
-                            font: { size: 12, weight: 'bold' }
-                        }
-                    }
+        console.log('✅ Création du graphique par type');
+        const typeCtx = document.getElementById('typeChart');
+        if (typeCtx) {
+            const ctx = typeCtx.getContext('2d');
+            const types = typeData.map(d => d.type);
+            const counts = typeData.map(d => d.avg_participants);
+            
+            const colors = [
+                'rgba(102, 126, 234, 0.7)',
+                'rgba(118, 75, 162, 0.7)',
+                'rgba(76, 175, 80, 0.7)',
+                'rgba(255, 152, 0, 0.7)'
+            ];
+            const borderColors = [
+                'rgba(102, 126, 234, 1)',
+                'rgba(118, 75, 162, 1)',
+                'rgba(76, 175, 80, 1)',
+                'rgba(255, 152, 0, 1)'
+            ];
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: types,
+                    datasets: [{
+                        label: 'Moyenne de Participants',
+                        data: counts,
+                        backgroundColor: colors.slice(0, types.length),
+                        borderColor: borderColors.slice(0, types.length),
+                        borderWidth: 2,
+                        borderRadius: 5
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 12, weight: 'bold' }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        } else {
+            console.error('❌ Canvas typeChart non trouvé');
+        }
+    } else {
+        console.warn('⚠️ Aucune donnée par type disponible');
+    }
+    
+    // Graphique d'évolution des nouveaux
+    if (evolutionData && evolutionData.length > 0) {
+        console.log('✅ Création du graphique des nouveaux');
+        const newCtx = document.getElementById('newChart');
+        if (newCtx) {
+            const ctx = newCtx.getContext('2d');
+            const dates = evolutionData.map(d => d.date);
+            const nouveaux = evolutionData.map(d => d.nouveaux);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Nombre de Nouveaux',
+                        data: nouveaux,
+                        borderColor: 'rgba(244, 67, 54, 1)',
+                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: 'rgba(244, 67, 54, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 12, weight: 'bold' }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            console.error('❌ Canvas newChart non trouvé');
+        }
+    } else {
+        console.warn('⚠️ Aucune donnée de nouveaux disponible');
+    }
+    
+    // ===== GRAPHIQUES DES SERVITEURS =====
+    // Graphique d'évolution des serviteurs
+    const serviteursEvolutionData = {{ serviteurs_evolution_json|safe }};
+    
+    console.log('📊 Données évolution serviteurs:', serviteursEvolutionData);
+    
+    if (serviteursEvolutionData && serviteursEvolutionData.length > 0) {
+        const servEvolutionCtx = document.getElementById('serviteursEvolutionChart');
+        if (servEvolutionCtx) {
+            const ctx = servEvolutionCtx.getContext('2d');
+            const dates = serviteursEvolutionData.map(d => d.date);
+            const nombres = serviteursEvolutionData.map(d => d.nombre);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Nombre de Serviteurs',
+                        data: nombres,
+                        borderColor: 'rgba(38, 194, 129, 1)',
+                        backgroundColor: 'rgba(38, 194, 129, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: 'rgba(38, 194, 129, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 12, weight: 'bold' }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    // Graphique de répartition des serviteurs par département
+    const serviteursDeptData = {{ serviteurs_data_json|safe }};
+    
+    console.log('📊 Données serviteurs par département:', serviteursDeptData);
+    
+    if (serviteursDeptData && serviteursDeptData.length > 0) {
+        const servDeptCtx = document.getElementById('serviteursDeptChart');
+        if (servDeptCtx) {
+            const ctx = servDeptCtx.getContext('2d');
+            const depts = serviteursDeptData.map(d => d.departement);
+            const nombres = serviteursDeptData.map(d => d.nombre);
+            
+            const colors = [
+                'rgba(38, 194, 129, 0.7)',
+                'rgba(52, 211, 153, 0.7)',
+                'rgba(16, 185, 129, 0.7)',
+                'rgba(5, 150, 105, 0.7)',
+                'rgba(4, 120, 87, 0.7)',
+                'rgba(6, 78, 59, 0.7)'
+            ];
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: depts,
+                    datasets: [{
+                        label: 'Nombre de Serviteurs',
+                        data: nombres,
+                        backgroundColor: colors.slice(0, depts.length),
+                        borderColor: colors.map(c => c.replace('0.7', '1')).slice(0, depts.length),
+                        borderWidth: 2,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 12, weight: 'bold' }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
 </script>
 

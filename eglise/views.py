@@ -14,6 +14,7 @@ import json
 from .models import Membre, Culte, Presence, Tribu, Departement, Statistique, UserProfile
 from .forms import SignUpForm, PatriarcheForm, ResponsableForm, PasteurForm, CategorySelectForm, LoginForm, MembreForm, PresenceForm, PresenceMembreSelectionForm, CulteForm
 from .mixins import DataFilteringMixin, ProtectedDataAccessMixin, RoleRequiredMixin
+from .admin_tribu_departement_view import AdminTribuDepartementView
 
 
 class LoginView(View):

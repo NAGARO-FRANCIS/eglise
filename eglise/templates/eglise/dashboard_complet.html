@@ -3,6 +3,16 @@
 {% block title %}Tableau de bord - Gestion d'Église{% endblock %}
 
 {% block content %}
+{% if user.is_superuser %}
+<div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 20px;">
+    <h3 style="color: white; margin-top: 0;">👑 Panneau Administrateur</h3>
+    <p style="margin-bottom: 15px; opacity: 0.9;">Accès aux interfaces d'administration globale</p>
+    <a href="{% url 'eglise:admin_tribu_departement' %}" style="display: inline-block; background: white; color: #667eea; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: all 0.3s;">
+        🔧 Gestion Tribues & Départements
+    </a>
+</div>
+{% endif %}
+
 <div class="card">
     <h2>📊 Tableau de Bord</h2>
     
@@ -52,43 +62,6 @@
         <h2>🏢 Analyse par Département</h2>
         <canvas id="departementChart" style="max-height: 400px;"></canvas>
     </div>
-</div>
-
-<div class="card">
-    <h2>📊 Tendances de Participation (par Semaine)</h2>
-    <canvas id="participationTrendsChart" style="max-height: 400px;"></canvas>
-</div>
-
-<div class="card">
-    <h2>📅 Cultes Récents</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Thème</th>
-                <th>Prédicateur</th>
-                <th>Participants</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for culte in cultes_recents %}
-            <tr>
-                <td>{{ culte.date|date:"d/m/Y" }}</td>
-                <td>{{ culte.get_type_culte_display }}</td>
-                <td>{{ culte.theme|default:"N/A" }}</td>
-                <td>{{ culte.predicateur|default:"N/A" }}</td>
-                <td><strong>{{ culte.nombre_participants }}</strong></td>
-                <td><a href="{% url 'eglise:culte_presence' culte.id %}" style="padding: 6px 12px; background: #667eea; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">Gérer présence</a></td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6">Aucun culte enregistré</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 </div>
 
 <div class="card">
@@ -205,47 +178,6 @@
                     labels: {
                         font: { size: 12 }
                     }
-                }
-            }
-        }
-    });
-    
-    // Graphique des tendances de participation
-    const trendCtx = document.getElementById('participationTrendsChart').getContext('2d');
-    const trendData = {{ participation_trends_json|safe }};
-    
-    new Chart(trendCtx, {
-        type: 'line',
-        data: {
-            labels: trendData.map(t => t.semaine),
-            datasets: [{
-                label: 'Présences',
-                data: trendData.map(t => t.count),
-                borderColor: 'rgba(76, 175, 80, 1)',
-                backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                borderWidth: 3,
-                tension: 0.4,
-                fill: true,
-                pointRadius: 5,
-                pointHoverRadius: 7,
-                pointBackgroundColor: 'rgba(76, 175, 80, 1)'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: {
-                        font: { size: 12 }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 }
                 }
             }
         }

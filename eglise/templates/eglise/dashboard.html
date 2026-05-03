@@ -3,6 +3,16 @@
 {% block title %}Tableau de bord - Gestion d'Église{% endblock %}
 
 {% block content %}
+{% if user.is_superuser %}
+<div class="card">
+    <h3 style="color: #667eea; margin-top: 0;">👑 Panneau Administrateur</h3>
+    <p style="margin-bottom: 15px; color: #999;">Accès aux interfaces d'administration globale</p>
+    <a href="{% url 'eglise:admin_tribu_departement' %}" style="display: inline-block; background: #667eea; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: all 0.3s;">
+        🔧 Gestion Tribues & Départements
+    </a>
+</div>
+{% endif %}
+
 <div class="card">
     <h2>📊 Tableau de Bord</h2>
     
@@ -60,45 +70,6 @@
         <canvas id="departementChart" style="max-height: 300px;"></canvas>
     </div>
     {% endif %}
-</div>
-
-<div class="card">
-    <h2>📈 Tendance d'Assistance par Type de Culte</h2>
-    <canvas id="attendanceTrendChart" style="max-height: 400px;"></canvas>
-</div>
-
-<div class="card">
-    <h2>📅 Cultes Récents</h2>
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Thème</th>
-                    <th>Prédicateur</th>
-                    <th>Participants</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for culte in cultes_recents %}
-                <tr>
-                    <td>{{ culte.date|date:"d/m/Y" }}</td>
-                    <td>{{ culte.get_type_culte_display }}</td>
-                    <td>{{ culte.theme|default:"N/A" }}</td>
-                    <td>{{ culte.predicateur|default:"N/A" }}</td>
-                    <td><strong>{{ culte.nombre_participants }}</strong></td>
-                    <td><a href="{% url 'eglise:culte_presence' culte.id %}" style="padding: clamp(0.4rem, 1vw, 0.5rem) clamp(0.75rem, 1.5vw, 1rem); background: #667eea; color: white; text-decoration: none; border-radius: 4px; font-size: clamp(0.7rem, 1.5vw, 0.85rem); white-space: nowrap;">Gérer</a></td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6" style="text-align: center; padding: 1.5rem;">Aucun culte enregistré</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
 </div>
 
 {% if is_statistique_responsable %}
@@ -278,36 +249,6 @@
             responsive: true,
             maintainAspectRatio: true,
             indexAxis: 'x',
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    }
-                }
-            }
-        }
-    });
-    
-    // Graphique de tendance d'assistance par type de culte
-    const attendanceTrendCtx = document.getElementById('attendanceTrendChart').getContext('2d');
-    const attendanceTrendData = {{ attendance_trend_json|safe }};
-    
-    new Chart(attendanceTrendCtx, {
-        type: 'line',
-        data: {
-            labels: attendanceTrendData.labels,
-            datasets: attendanceTrendData.datasets
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
             plugins: {
                 legend: {
                     display: true,

@@ -11,7 +11,7 @@ from django.utils import timezone
 from datetime import timedelta
 import json
 
-from .models import Culte, Presence
+from .models import Culte, Presence, Membre, Departement
 from .forms import CulteForm, ParticipationDimanchemForm
 
 
@@ -208,16 +208,12 @@ class CulteStatisticsView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Récupérer TOUS les cultes (pas juste 3 mois)
+        # Récupérer TOUS les cultes pour les graphiques (pas de filtrage par date)
         all_cultes = Culte.objects.all().order_by('-date')
         
-        # Données des 3 derniers mois pour les graphiques
-        three_months_ago = timezone.now().date() - timedelta(days=90)
-        cultes = Culte.objects.filter(date__gte=three_months_ago).order_by('date')
-        
-        # Données pour graphique d'évolution
+        # Données pour graphique d'évolution - utiliser TOUS les cultes
         evolution_data = []
-        for culte in cultes:
+        for culte in all_cultes.order_by('date'):
             evolution_data.append({
                 'date': culte.date.strftime('%d/%m/%Y'),
                 'participants': culte.nombre_participants,
@@ -229,8 +225,8 @@ class CulteStatisticsView(LoginRequiredMixin, TemplateView):
         context['evolution_data_json'] = json.dumps(evolution_data)
         context['cultes_list'] = all_cultes  # Liste de tous les cultes pour affichage
         
-        # Données par type de culte
-        type_stats = cultes.values('type_culte').annotate(
+        # Données par type de culte - utiliser TOUS les cultes
+        type_stats = all_cultes.values('type_culte').annotate(
             count=Count('id'),
             avg_participants=Avg('nombre_participants')
         )
@@ -245,6 +241,56 @@ class CulteStatisticsView(LoginRequiredMixin, TemplateView):
             })
         
         context['type_data_json'] = json.dumps(type_data)
+        
+        # ===== DONNÉES DES SERVITEURS (MEMBRES DES DÉPARTEMENTS) =====
+        # Compter les serviteurs (membres actifs) par département
+        all_membres = Membre.objects.filter(statut='actif')
+        
+        serviteurs_data = []
+        departements = Departement.objects.all()
+        for dept in departements:
+            serviteurs_count = all_membres.filter(departement=dept).count()
+            serviteurs_data.append({
+                'departement': dept.nom,
+                'nombre': serviteurs_count,
+                'id': dept.id
+            })
+        
+        context['serviteurs_data_json'] = json.dumps(serviteurs_data)
+        
+        # Données pour courbe d'évolution des serviteurs par mois
+        serviteurs_evolution = []
+        # Grouper par date de création du membre
+        membres_by_date = all_membres.values('date_creation').annotate(
+            count=Count('id')
+        ).order_by('date_creation')
+        
+        cumulative_count = 0
+        for item in membres_by_date:
+            if item['date_creation']:
+                cumulative_count += item['count']
+                serviteurs_evolution.append({
+                    'date': item['date_creation'].strftime('%d/%m/%Y'),
+                    'nombre': cumulative_count
+                })
+        
+        # Si pas de date_creation, créer des données temporelles
+        if not serviteurs_evolution:
+            # Utiliser les données de dates des membres
+            all_membres_ordered = all_membres.order_by('id')[:100]  # Limitation pour éviter trop de données
+            for idx, membre in enumerate(all_membres_ordered, 1):
+                serviteurs_evolution.append({
+                    'date': f'Membre {idx}',
+                    'nombre': idx
+                })
+        
+        context['serviteurs_evolution_json'] = json.dumps(serviteurs_evolution)
+        
+        # Statistiques des serviteurs
+        context['stats_serviteurs'] = {
+            'total_serviteurs': all_membres.count(),
+            'serviteurs_par_departement': serviteurs_data,
+        }
         
         # Statistiques globales
         context['stats'] = {
