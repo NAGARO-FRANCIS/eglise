@@ -110,6 +110,27 @@ class PatriarcheForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.role = 'patriarche'
+    
+    def clean(self):
+        """Validation pour s'assurer qu'une tribu n'a qu'un seul patriarche"""
+        cleaned_data = super().clean()
+        tribu = cleaned_data.get('tribu')
+        
+        if tribu:
+            # Chercher un autre patriarche pour la même tribu
+            existing = UserProfile.objects.filter(
+                role='patriarche',
+                tribu=tribu
+            ).exclude(pk=self.instance.pk)
+            
+            if existing.exists():
+                existing_user = existing.first().user.get_full_name() or existing.first().user.username
+                raise forms.ValidationError(
+                    f"La tribu '{tribu.nom}' a déjà un patriarche: {existing_user}. "
+                    f"Une tribu ne peut avoir qu'un seul patriarche."
+                )
+        
+        return cleaned_data
 
 
 class ResponsableForm(forms.ModelForm):
@@ -135,6 +156,27 @@ class ResponsableForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.role = 'responsable'
+    
+    def clean(self):
+        """Validation pour s'assurer qu'un département n'a qu'un seul responsable"""
+        cleaned_data = super().clean()
+        departement = cleaned_data.get('departement')
+        
+        if departement:
+            # Chercher un autre responsable pour le même département
+            existing = UserProfile.objects.filter(
+                role='responsable',
+                departement=departement
+            ).exclude(pk=self.instance.pk)
+            
+            if existing.exists():
+                existing_user = existing.first().user.get_full_name() or existing.first().user.username
+                raise forms.ValidationError(
+                    f"Le département '{departement.nom}' a déjà un responsable: {existing_user}. "
+                    f"Un département ne peut avoir qu'un seul responsable."
+                )
+        
+        return cleaned_data
     
     def save(self, commit=True):
         instance = super().save(commit=commit)

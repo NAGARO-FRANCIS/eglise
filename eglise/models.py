@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 
 class UserProfile(models.Model):
@@ -40,6 +41,43 @@ class UserProfile(models.Model):
     
     def est_responsable(self):
         return self.role == 'responsable'
+    
+    def clean(self):
+        """Validation pour s'assurer qu'une tribu/département n'a qu'un seul responsable"""
+        # Vérifier l'unicité du patriarche pour une tribu
+        if self.role == 'patriarche' and self.tribu:
+            # Chercher un autre patriarche pour la même tribu
+            existing = UserProfile.objects.filter(
+                role='patriarche',
+                tribu=self.tribu
+            ).exclude(pk=self.pk)  # Exclure le profil actuel (pour les mises à jour)
+            
+            if existing.exists():
+                existing_user = existing.first().user.get_full_name() or existing.first().user.username
+                raise ValidationError(
+                    f"La tribu '{self.tribu.nom}' a déjà un patriarche: {existing_user}. "
+                    f"Une tribu ne peut avoir qu'un seul patriarche."
+                )
+        
+        # Vérifier l'unicité du responsable pour un département
+        if self.role == 'responsable' and self.departement:
+            # Chercher un autre responsable pour le même département
+            existing = UserProfile.objects.filter(
+                role='responsable',
+                departement=self.departement
+            ).exclude(pk=self.pk)  # Exclure le profil actuel (pour les mises à jour)
+            
+            if existing.exists():
+                existing_user = existing.first().user.get_full_name() or existing.first().user.username
+                raise ValidationError(
+                    f"Le département '{self.departement.nom}' a déjà un responsable: {existing_user}. "
+                    f"Un département ne peut avoir qu'un seul responsable."
+                )
+    
+    def save(self, *args, **kwargs):
+        """Appel de la validation avant la sauvegarde"""
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class Tribu(models.Model):
@@ -192,3 +230,74 @@ class Statistique(models.Model):
 
     def __str__(self):
         return f"Statistiques du {self.date}"
+
+
+class RapportMensuel(models.Model):
+    """Rapport mensuel détaillé"""
+    STATUS_CHOICES = (
+        ('brouillon', 'Brouillon'),
+        ('valide', 'Validé'),
+        ('archive', 'Archivé'),
+    )
+    
+    # Identification du rapport
+    mois = models.IntegerField(choices=[(i, f"Mois {i}") for i in range(1, 13)])
+    annee = models.IntegerField()
+    
+    # Données générales
+    nombre_total_membres = models.IntegerField(default=0)
+    nombre_membres_actifs = models.IntegerField(default=0)
+    nombre_membres_nouveau = models.IntegerField(default=0)
+    nombre_membres_inactif = models.IntegerField(default=0)
+    nombre_membres_sorti = models.IntegerField(default=0)
+    
+    # Données par tribu
+    nombre_tribus = models.IntegerField(default=0)
+    membres_par_tribu = models.JSONField(default=dict, blank=True)
+    
+    # Données par département
+    nombre_departements = models.IntegerField(default=0)
+    membres_par_departement = models.JSONField(default=dict, blank=True)
+    
+    # Statistiques d'assistance
+    nombre_cultes = models.IntegerField(default=0)
+    nombre_total_presences = models.IntegerField(default=0)
+    nombre_total_absences = models.IntegerField(default=0)
+    taux_participation_moyen = models.FloatField(default=0.0)
+    
+    # Données par type de culte
+    cultes_par_type = models.JSONField(default=dict, blank=True)
+    
+    # Notes et observations
+    notes = models.TextField(blank=True, null=True)
+    observations = models.TextField(blank=True, null=True)
+    
+    # Gestion du rapport
+    statut = models.CharField(max_length=20, choices=STATUS_CHOICES, default='brouillon')
+    auteur = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='rapports_mensuels')
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+    date_validation = models.DateTimeField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-annee', '-mois']
+        unique_together = ('mois', 'annee')
+        verbose_name_plural = "Rapports Mensuels"
+    
+    def __str__(self):
+        mois_names = {
+            1: 'Janvier', 2: 'Février', 3: 'Mars', 4: 'Avril',
+            5: 'Mai', 6: 'Juin', 7: 'Juillet', 8: 'Août',
+            9: 'Septembre', 10: 'Octobre', 11: 'Novembre', 12: 'Décembre'
+        }
+        return f"Rapport {mois_names.get(self.mois, 'N/A')} {self.annee}"
+    
+    @property
+    def periode_str(self):
+        """Retourne la période en format lisible"""
+        mois_names = {
+            1: 'Janvier', 2: 'Février', 3: 'Mars', 4: 'Avril',
+            5: 'Mai', 6: 'Juin', 7: 'Juillet', 8: 'Août',
+            9: 'Septembre', 10: 'Octobre', 11: 'Novembre', 12: 'Décembre'
+        }
+        return f"{mois_names.get(self.mois, 'N/A')} {self.annee}"

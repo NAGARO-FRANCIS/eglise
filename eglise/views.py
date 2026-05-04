@@ -11,7 +11,7 @@ from django.http import JsonResponse
 from datetime import timedelta
 from collections import defaultdict
 import json
-from .models import Membre, Culte, Presence, Tribu, Departement, Statistique, UserProfile
+from .models import Membre, Culte, Presence, Tribu, Departement, Statistique, UserProfile, RapportMensuel
 from .forms import SignUpForm, PatriarcheForm, ResponsableForm, PasteurForm, CategorySelectForm, LoginForm, MembreForm, PresenceForm, PresenceMembreSelectionForm, CulteForm
 from .mixins import DataFilteringMixin, ProtectedDataAccessMixin, RoleRequiredMixin
 from .admin_tribu_departement_view import AdminTribuDepartementView
@@ -122,6 +122,7 @@ class RoleCompletionView(TemplateView):
     template_name = 'eglise/role_completion.html'
     
     def get(self, request):
+        """Afficher le formulaire de complétion de profil"""
         if 'new_user_id' not in request.session or 'user_category' not in request.session:
             return redirect('eglise:category-select')
         
@@ -148,19 +149,20 @@ class RoleCompletionView(TemplateView):
             context['departement_choices'] = Departement.objects.all()
         
         return render(request, self.template_name, context)
-    
+
     def post(self, request):
+        """Traiter la soumission du formulaire de complétion"""
         if 'new_user_id' not in request.session or 'user_category' not in request.session:
             return redirect('eglise:category-select')
-        
+
         user_id = request.session.get('new_user_id')
         category = request.session.get('user_category')
-        
+
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return redirect('eglise:category-select')
-        
+
         if category == 'patriarche':
             form = PatriarcheForm(request.POST)
             if form.is_valid():
@@ -168,6 +170,16 @@ class RoleCompletionView(TemplateView):
                 profile.user = user
                 profile.role = 'patriarche'
                 profile.save()
+            else:
+                context = {
+                    'category': category,
+                    'user': user,
+                    'form': form,
+                    'form_title': "Complétez votre profil - Patriarche de Tribu",
+                    'tribu_choices': Tribu.objects.all(),
+                }
+                return render(request, self.template_name, context)
+
         elif category == 'responsable':
             form = ResponsableForm(request.POST)
             if form.is_valid():
@@ -175,19 +187,27 @@ class RoleCompletionView(TemplateView):
                 profile.user = user
                 profile.role = 'responsable'
                 profile.save()
+            else:
+                context = {
+                    'category': category,
+                    'user': user,
+                    'form': form,
+                    'form_title': "Complétez votre profil - Responsable de Département",
+                    'departement_choices': Departement.objects.all(),
+                }
+                return render(request, self.template_name, context)
         else:
             return redirect('eglise:category-select')
-        
-        # Connecter l'utilisateur
-        login(request, user)
-        
-        # Nettoyer la session
-        del request.session['new_user_id']
-        del request.session['user_category']
-        del request.session['selected_category']
-        
-        return redirect('eglise:dashboard')
 
+        # ✅ Nettoyer la session EN PREMIER
+        request.session.pop('new_user_id', None)
+        request.session.pop('user_category', None)
+        request.session.pop('selected_category', None)
+
+        # ✅ Connecter l'utilisateur APRÈS (évite le conflit de token CSRF)
+        login(request, user)
+
+        return redirect('eglise:dashboard')
 
 def get_user_profile(user):
     """Récupère le profil de l'utilisateur"""

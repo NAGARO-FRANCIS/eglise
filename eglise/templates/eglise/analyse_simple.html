@@ -104,34 +104,6 @@
     </table>
 </div>
 
-<div class="card">
-    <h2>📈 Évolution des Membres (derniers mois)</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Total</th>
-                <th>Actifs</th>
-                <th>Nouveaux</th>
-                <th>Sortis</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for stat in evolution_membres %}
-            <tr>
-                <td>{{ stat.date|date:"d/m/Y" }}</td>
-                <td>{{ stat.nombre_total_membres }}</td>
-                <td>{{ stat.nombre_membres_actifs }}</td>
-                <td>{{ stat.nombre_membres_nouveau }}</td>
-                <td>{{ stat.nombre_membres_sorti }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5">Aucune donnée d'évolution</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+
 
 {% endblock %}
