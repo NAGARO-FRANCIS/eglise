@@ -244,6 +244,10 @@ class RapportMensuel(models.Model):
     mois = models.IntegerField(choices=[(i, f"Mois {i}") for i in range(1, 13)])
     annee = models.IntegerField()
     
+    # Structure (optionnel - si null: rapport global)
+    tribu = models.ForeignKey(Tribu, on_delete=models.CASCADE, null=True, blank=True, related_name='rapports_mensuels')
+    departement = models.ForeignKey(Departement, on_delete=models.CASCADE, null=True, blank=True, related_name='rapports_mensuels')
+    
     # Données générales
     nombre_total_membres = models.IntegerField(default=0)
     nombre_membres_actifs = models.IntegerField(default=0)
@@ -281,7 +285,7 @@ class RapportMensuel(models.Model):
     
     class Meta:
         ordering = ['-annee', '-mois']
-        unique_together = ('mois', 'annee')
+        unique_together = [('mois', 'annee', 'tribu', 'departement')]
         verbose_name_plural = "Rapports Mensuels"
     
     def __str__(self):

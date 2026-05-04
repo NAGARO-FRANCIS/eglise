@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import culte_views
+from . import views_rapports
 
 app_name = 'eglise'
 
@@ -44,4 +45,8 @@ urlpatterns = [
     # API endpoints pour modifier et supprimer les membres
     path('api/membres/update/', views.MembreUpdateAPIView.as_view(), name='api_membre_update'),
     path('api/membres/<int:membre_id>/delete/', views.MembreDeleteAPIView.as_view(), name='api_membre_delete'),
+    
+    # Rapports mensuels
+    path('rapports/', views_rapports.RapportMensuelListView.as_view(), name='rapports_list'),
+    path('rapports/<int:pk>/', views_rapports.RapportMensuelDetailView.as_view(), name='rapport_detail'),
 ]

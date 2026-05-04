@@ -1,0 +1,434 @@
+{% extends 'eglise/base.html' %}
+
+{% block title %}{{ rapport.periode_str }} - Rapport Mensuel{% endblock %}
+
+{% block content %}
+<style>
+    .rapport-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+    
+    .rapport-titre {
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .rapport-meta {
+        display: flex;
+        gap: 20px;
+        font-size: 14px;
+        opacity: 0.9;
+    }
+    
+    .section-rapport {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 20px;
+    }
+    
+    .section-titre {
+        font-size: 18px;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #667eea;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+    
+    .stat-item {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .stat-item.actifs {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    }
+    
+    .stat-item.nouveaux {
+        background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);
+    }
+    
+    .stat-item.inactifs {
+        background: linear-gradient(135deg, #FF9800 0%, #e68900 100%);
+    }
+    
+    .stat-item.sortis {
+        background: linear-gradient(135deg, #F44336 0%, #da190b 100%);
+    }
+    
+    .stat-value {
+        font-size: 32px;
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-size: 12px;
+        opacity: 0.9;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    .table-rapport {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    
+    .table-rapport th {
+        background: #667eea;
+        color: white;
+        padding: 12px;
+        text-align: left;
+        font-weight: bold;
+    }
+    
+    .table-rapport td {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .table-rapport tr:hover {
+        background: #f9f9f9;
+    }
+    
+    .notes-box {
+        background: #f9f9f9;
+        border-left: 4px solid #667eea;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .notes-title {
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+    
+    .statut-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        color: white;
+    }
+    
+    .statut-brouillon {
+        background-color: #FFC107;
+    }
+    
+    .statut-valide {
+        background-color: #4CAF50;
+    }
+    
+    .statut-archive {
+        background-color: #9E9E9E;
+    }
+    
+    .btn-back {
+        padding: 10px 20px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-block;
+        margin-bottom: 20px;
+    }
+    
+    .btn-back:hover {
+        background: #764ba2;
+    }
+</style>
+
+<a href="{% url 'eglise:rapports_list' %}" class="btn-back">← Retour aux rapports</a>
+
+<div class="rapport-header">
+    <div class="rapport-titre">📊 Rapport {{ rapport.periode_str }}</div>
+    <div class="rapport-meta">
+        <span><strong>Statut:</strong> <span class="statut-badge statut-{{ rapport.statut }}">{{ rapport.get_statut_display }}</span></span>
+        <span><strong>Créé:</strong> {{ rapport.date_creation|date:"d/m/Y H:i" }}</span>
+        {% if rapport.auteur %}
+            <span><strong>Auteur:</strong> {{ rapport.auteur.get_full_name|default:rapport.auteur.username }}</span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistiques Générales -->
+<div class="section-rapport">
+    <div class="section-titre">📈 Statistiques Générales</div>
+    <div class="stats-grid">
+        <div class="stat-item">
+            <span class="stat-value">{{ rapport.nombre_total_membres }}</span>
+            <span class="stat-label">Membres Total</span>
+        </div>
+        <div class="stat-item actifs">
+            <span class="stat-value">{{ rapport.nombre_membres_actifs }}</span>
+            <span class="stat-label">Membres Actifs</span>
+        </div>
+        <div class="stat-item nouveaux">
+            <span class="stat-value">{{ rapport.nombre_membres_nouveau }}</span>
+            <span class="stat-label">Nouveaux Membres</span>
+        </div>
+        <div class="stat-item inactifs">
+            <span class="stat-value">{{ rapport.nombre_membres_inactif }}</span>
+            <span class="stat-label">Inactifs</span>
+        </div>
+        <div class="stat-item sortis">
+            <span class="stat-value">{{ rapport.nombre_membres_sorti }}</span>
+            <span class="stat-label">Sortis</span>
+        </div>
+    </div>
+</div>
+
+<!-- Structures (Tribus et Départements) -->
+<div class="section-rapport">
+    <div class="section-titre">🏗️ Structures</div>
+    <div class="stats-grid">
+        <div class="stat-item">
+            <span class="stat-value">{{ rapport.nombre_tribus }}</span>
+            <span class="stat-label">Tribus</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">{{ rapport.nombre_departements }}</span>
+            <span class="stat-label">Départements</span>
+        </div>
+    </div>
+</div>
+
+<!-- Répartition par Tribu -->
+{% if rapport.membres_par_tribu %}
+<div class="section-rapport">
+    <div class="section-titre">👥 Répartition par Tribu</div>
+    {% if tribu_chart_data %}
+    <div class="chart-container">
+        <canvas id="tribuChart"></canvas>
+    </div>
+    {% endif %}
+    <table class="table-rapport">
+        <thead>
+            <tr>
+                <th>Tribu</th>
+                <th>Membres</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tribu_nom, nombre in rapport.membres_par_tribu.items %}
+            <tr>
+                <td>{{ tribu_nom }}</td>
+                <td><strong>{{ nombre }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Répartition par Département -->
+{% if rapport.membres_par_departement %}
+<div class="section-rapport">
+    <div class="section-titre">🏢 Répartition par Département</div>
+    {% if departement_chart_data %}
+    <div class="chart-container">
+        <canvas id="departementChart"></canvas>
+    </div>
+    {% endif %}
+    <table class="table-rapport">
+        <thead>
+            <tr>
+                <th>Département</th>
+                <th>Membres</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dept_nom, nombre in rapport.membres_par_departement.items %}
+            <tr>
+                <td>{{ dept_nom }}</td>
+                <td><strong>{{ nombre }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Statistiques d'Assistance -->
+<div class="section-rapport">
+    <div class="section-titre">🙏 Statistiques d'Assistance</div>
+    <div class="stats-grid">
+        <div class="stat-item">
+            <span class="stat-value">{{ rapport.nombre_cultes }}</span>
+            <span class="stat-label">Cultes Tenus</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">{{ rapport.nombre_total_presences }}</span>
+            <span class="stat-label">Présences</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">{{ rapport.nombre_total_absences }}</span>
+            <span class="stat-label">Absences</span>
+        </div>
+        <div class="stat-item actifs">
+            <span class="stat-value">{{ rapport.taux_participation_moyen }}%</span>
+            <span class="stat-label">Taux Participation</span>
+        </div>
+    </div>
+</div>
+
+<!-- Cultes par Type -->
+{% if rapport.cultes_par_type %}
+<div class="section-rapport">
+    <div class="section-titre">⛪ Cultes par Type</div>
+    {% if type_culte_chart_data %}
+    <div class="chart-container">
+        <canvas id="typeCulteChart"></canvas>
+    </div>
+    {% endif %}
+    <table class="table-rapport">
+        <thead>
+            <tr>
+                <th>Type de Culte</th>
+                <th>Nombre</th>
+                <th>Participants</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for type_culte, data in rapport.cultes_par_type.items %}
+            <tr>
+                <td>{{ type_culte }}</td>
+                <td>{{ data.nombre }}</td>
+                <td><strong>{{ data.participants }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Notes et Observations -->
+{% if rapport.notes or rapport.observations %}
+<div class="section-rapport">
+    <div class="section-titre">📝 Notes et Observations</div>
+    {% if rapport.notes %}
+    <div class="notes-box">
+        <div class="notes-title">Notes:</div>
+        {{ rapport.notes|linebreaks }}
+    </div>
+    {% endif %}
+    {% if rapport.observations %}
+    <div class="notes-box">
+        <div class="notes-title">Observations:</div>
+        {{ rapport.observations|linebreaks }}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Graphique des tribus
+    {% if tribu_chart_data %}
+    const tribuData = {{ tribu_chart_data|safe }};
+    const tribuCtx = document.getElementById('tribuChart').getContext('2d');
+    new Chart(tribuCtx, {
+        type: 'bar',
+        data: {
+            labels: tribuData.labels,
+            datasets: [{
+                label: 'Membres',
+                data: tribuData.values,
+                backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                borderColor: 'rgba(102, 126, 234, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+    {% endif %}
+    
+    // Graphique des départements
+    {% if departement_chart_data %}
+    const deptData = {{ departement_chart_data|safe }};
+    const deptCtx = document.getElementById('departementChart').getContext('2d');
+    new Chart(deptCtx, {
+        type: 'bar',
+        data: {
+            labels: deptData.labels,
+            datasets: [{
+                label: 'Membres',
+                data: deptData.values,
+                backgroundColor: 'rgba(118, 75, 162, 0.6)',
+                borderColor: 'rgba(118, 75, 162, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+    {% endif %}
+    
+    // Graphique des types de culte
+    {% if type_culte_chart_data %}
+    const typeData = {{ type_culte_chart_data|safe }};
+    const typeCtx = document.getElementById('typeCulteChart').getContext('2d');
+    new Chart(typeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: typeData.labels,
+            datasets: [{
+                data: typeData.values,
+                backgroundColor: [
+                    'rgba(102, 126, 234, 0.8)',
+                    'rgba(118, 75, 162, 0.8)',
+                    'rgba(76, 175, 80, 0.8)',
+                    'rgba(255, 152, 0, 0.8)',
+                    'rgba(244, 67, 54, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right' }
+            }
+        }
+    });
+    {% endif %}
+</script>
+
+{% endblock %}

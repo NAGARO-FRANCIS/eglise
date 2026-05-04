@@ -1,0 +1,258 @@
+{% extends 'eglise/base.html' %}
+
+{% block title %}Rapports Mensuels - Gestion d'Église{% endblock %}
+
+{% block content %}
+<style>
+    .rapport-card {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .rapport-card:hover {
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .rapport-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .rapport-periode {
+        font-size: 20px;
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .rapport-statut {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .statut-brouillon {
+        background-color: #FFC107;
+        color: white;
+    }
+    
+    .statut-valide {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    .statut-archive {
+        background-color: #9E9E9E;
+        color: white;
+    }
+    
+    .rapport-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .stat-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 6px;
+        text-align: center;
+    }
+    
+    .stat-box.actifs {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    }
+    
+    .stat-box.participation {
+        background: linear-gradient(135deg, #FF9800 0%, #e68900 100%);
+    }
+    
+    .stat-box.cultes {
+        background: linear-gradient(135deg, #2196F3 0%, #0b7dda 100%);
+    }
+    
+    .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 12px;
+        opacity: 0.9;
+    }
+    
+    .rapport-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+        font-size: 12px;
+        color: #999;
+    }
+    
+    .btn-voir {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-voir:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .no-rapports {
+        text-align: center;
+        padding: 60px 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+        color: #999;
+    }
+    
+    .filters {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        padding: 8px 16px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        cursor: pointer;
+        background: white;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-btn:hover,
+    .filter-btn.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+</style>
+
+<div class="card">
+    <h2>📊 Rapports Mensuels</h2>
+    <p>Suivez les rapports détaillés de l'église mois par mois</p>
+</div>
+
+<div class="filters">
+    <button class="filter-btn active" onclick="filterRapports('tous')">Tous</button>
+    <button class="filter-btn" onclick="filterRapports('valide')">Validés</button>
+    <button class="filter-btn" onclick="filterRapports('brouillon')">Brouillons</button>
+    <button class="filter-btn" onclick="filterRapports('archive')">Archivés</button>
+</div>
+
+{% if rapports %}
+    <div id="rapports-container">
+        {% for rapport in rapports %}
+        <div class="rapport-card" data-statut="{{ rapport.statut }}">
+            <div class="rapport-header">
+                <div class="rapport-periode">📅 {{ rapport.periode_str }}</div>
+                <span class="rapport-statut statut-{{ rapport.statut }}">{{ rapport.get_statut_display }}</span>
+            </div>
+            
+            <div class="rapport-stats">
+                <div class="stat-box">
+                    <span class="stat-value">{{ rapport.nombre_total_membres }}</span>
+                    <span class="stat-label">Membres</span>
+                </div>
+                <div class="stat-box actifs">
+                    <span class="stat-value">{{ rapport.nombre_membres_actifs }}</span>
+                    <span class="stat-label">Actifs</span>
+                </div>
+                <div class="stat-box participation">
+                    <span class="stat-value">{{ rapport.taux_participation_moyen }}%</span>
+                    <span class="stat-label">Participation</span>
+                </div>
+                <div class="stat-box cultes">
+                    <span class="stat-value">{{ rapport.nombre_cultes }}</span>
+                    <span class="stat-label">Cultes</span>
+                </div>
+            </div>
+            
+            <div class="rapport-footer">
+                <span>Créé le: {{ rapport.date_creation|date:"d/m/Y H:i" }}</span>
+                <a href="{% url 'eglise:rapport_detail' rapport.pk %}" class="btn-voir">Voir Détails</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div style="text-align: center; margin-top: 30px;">
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page=1" class="btn-voir">« Première</a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="btn-voir">‹ Précédente</a>
+            {% endif %}
+            
+            <span style="padding: 0 15px;">
+                Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="btn-voir">Suivante ›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="btn-voir">Dernière »</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+{% else %}
+    <div class="no-rapports">
+        <div style="font-size: 48px; margin-bottom: 10px;">📊</div>
+        <p>Aucun rapport mensuel disponible</p>
+        <p style="font-size: 12px; color: #bbb; margin-top: 10px;">
+            Les rapports seront générés automatiquement chaque mois
+        </p>
+    </div>
+{% endif %}
+
+<script>
+function filterRapports(statut) {
+    const container = document.getElementById('rapports-container');
+    const cartes = container.querySelectorAll('.rapport-card');
+    
+    // Mise à jour du bouton actif
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Filtrer les cartes
+    cartes.forEach(carte => {
+        if (statut === 'tous') {
+            carte.style.display = 'block';
+        } else {
+            if (carte.dataset.statut === statut) {
+                carte.style.display = 'block';
+            } else {
+                carte.style.display = 'none';
+            }
+        }
+    });
+}
+</script>
+
+{% endblock %}
