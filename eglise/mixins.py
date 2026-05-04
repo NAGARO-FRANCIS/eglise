@@ -165,6 +165,11 @@ class ProtectedDataAccessMixin(DataFilteringMixin, RoleRequiredMixin):
         membres_queryset = Membre.objects.all()
         membres_filtered = self.get_filtered_queryset(membres_queryset)
         
+        # Pour l'admin (Nagaro): compter SEULEMENT les membres ayant une tribu
+        user = self.request.user
+        if user.is_superuser:
+            membres_filtered = membres_filtered.filter(tribu__isnull=False)
+        
         stats = {
             'total_membres': membres_filtered.count(),
             'membres_actifs': membres_filtered.filter(statut='actif').count(),

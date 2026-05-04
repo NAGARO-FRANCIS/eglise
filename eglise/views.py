@@ -698,9 +698,13 @@ class StatistiquesView(ProtectedDataAccessMixin, TemplateView):
         # Filtrer les membres selon l'utilisateur
         membres_filtered = self.get_filtered_queryset(Membre.objects.all())
         
-        # Statistiques par mois
-        debut = timezone.now().date() - timedelta(days=90)
-        cultes = Culte.objects.filter(date__gte=debut).order_by('date')
+        # Périodes
+        debut_3m = timezone.now().date() - timedelta(days=90)
+        debut_1m = timezone.now().date() - timedelta(days=30)
+        debut_2m = timezone.now().date() - timedelta(days=60)
+        
+        # Exclure les cultes locaux des statistiques globales
+        cultes = Culte.objects.filter(date__gte=debut_3m).exclude(scope__in=['tribu', 'departement']).order_by('date')
         
         cultes_par_mois = defaultdict(int)
         for culte in cultes:
@@ -724,14 +728,16 @@ class StatistiquesView(ProtectedDataAccessMixin, TemplateView):
                 'total': stat.nombre_total_membres,
                 'actifs': stat.nombre_membres_actifs,
                 'nouveau': stat.nombre_membres_nouveau,
-                'sorti': stat.nombre_membres_sorti
+                'sorti': stat.nombre_membres_sorti,
+                'inactif': stat.nombre_membres_inactif
             })
         context['evolution_membres_json'] = json.dumps(evolution_json)
         
         # Top participants (filtrés selon les membres accessibles)
+        # Exclure les cultes locaux des statistiques globales
         cultes_recentes = Culte.objects.filter(
-            date__gte=debut
-        ).values_list('id', flat=True)
+            date__gte=debut_3m
+        ).exclude(scope__in=['tribu', 'departement']).values_list('id', flat=True)
         
         top_participants = membres_filtered.annotate(
             participations=Count('presence', filter=Q(
@@ -740,28 +746,34 @@ class StatistiquesView(ProtectedDataAccessMixin, TemplateView):
             ))
         ).order_by('-participations')[:10]
         
-        context['top_participants'] = top_participants
+        # Ajouter la largeur de la barre pré-calculée (participations * 8)
+        top_participants_with_width = []
+        for member in top_participants:
+            member.bar_width = member.participations * 8
+            top_participants_with_width.append(member)
+        
+        context['top_participants'] = top_participants_with_width
         
         # Préparer les données JSON pour les top participants
         top_json = []
-        for member in top_participants:
+        for member in top_participants_with_width:
             top_json.append({
                 'nom_complet': f"{member.prenom} {member.nom}",
                 'participations': member.participations
             })
         context['top_participants_json'] = json.dumps(top_json)
         
-        # Calculer les taux de participation
+        # Calculer les taux de participation (exclure cultes locaux)
         total_presences = Presence.objects.filter(
-            culte__date__gte=debut,
+            culte__date__gte=debut_3m,
             membre__in=membres_filtered
-        ).count()
+        ).exclude(culte__scope__in=['tribu', 'departement']).count()
         
         presences_positives = Presence.objects.filter(
-            culte__date__gte=debut,
+            culte__date__gte=debut_3m,
             membre__in=membres_filtered,
             present=True
-        ).count()
+        ).exclude(culte__scope__in=['tribu', 'departement']).count()
         
         participation_rates = {
             'presents': presences_positives,
@@ -788,7 +800,107 @@ class StatistiquesView(ProtectedDataAccessMixin, TemplateView):
             statuts_list.append(stat)
         context['membres_par_statut'] = statuts_list
         
+        # KPIs - Statistiques clés
+        taux_participation_1m = self._calculer_taux_participation(debut_1m, membres_filtered)
+        taux_participation_2m = self._calculer_taux_participation(debut_2m, membres_filtered)
+        taux_participation_3m = self._calculer_taux_participation(debut_3m, membres_filtered)
+        
+        # Variation du taux de participation
+        variation_taux = taux_participation_1m - taux_participation_2m if taux_participation_2m > 0 else 0
+        
+        context['kpis'] = {
+            'total_membres': total_membres,
+            'membres_actifs': membres_filtered.filter(statut='actif').count(),
+            'taux_participation_1m': round(taux_participation_1m, 1),
+            'taux_participation_3m': round(taux_participation_3m, 1),
+            'variation_taux': round(variation_taux, 1),
+            'cultes_1m': Culte.objects.filter(date__gte=debut_1m).exclude(scope__in=['tribu', 'departement']).count(),
+            'nouveaux_membres_1m': membres_filtered.filter(statut='nouveau', date_adhesion__gte=debut_1m).count(),
+        }
+        
+        # Participation par tribu
+        tribu_participation = self._calculer_participation_par_tribu(debut_3m, membres_filtered)
+        context['tribu_participation_json'] = json.dumps(tribu_participation)
+        
+        # Participation par département
+        dept_participation = self._calculer_participation_par_departement(debut_3m, membres_filtered)
+        context['dept_participation_json'] = json.dumps(dept_participation)
+        
         return context
+    
+    def _calculer_taux_participation(self, date_debut, membres, include_local=False):
+        """
+        Calcule le taux de participation à partir d'une date
+        include_local=False: exclut les cultes locaux (pour stats globales)
+        include_local=True: inclut les cultes locaux
+        """
+        query = Presence.objects.filter(
+            culte__date__gte=date_debut,
+            membre__in=membres
+        )
+        
+        # Pour les statistiques GLOBALES: exclure les cultes locaux
+        if not include_local:
+            query = query.exclude(culte__scope__in=['tribu', 'departement'])
+        
+        if query.count() == 0:
+            return 0
+        presences_positives = query.filter(present=True).count()
+        return (presences_positives / query.count()) * 100
+    
+    def _calculer_participation_par_tribu(self, date_debut, membres):
+        """Calcule la participation par tribu (en utilisant SEULEMENT les cultes locaux de chaque tribu)"""
+        tribus = Tribu.objects.all()
+        data = []
+        for tribu in tribus:
+            membres_tribu = membres.filter(tribu=tribu)
+            if membres_tribu.count() > 0:
+                # Calculer UNIQUEMENT avec les cultes locaux de cette tribu
+                presences = Presence.objects.filter(
+                    culte__date__gte=date_debut,
+                    culte__scope='tribu',
+                    culte__tribu=tribu,
+                    membre__in=membres_tribu
+                )
+                if presences.count() > 0:
+                    presences_positives = presences.filter(present=True).count()
+                    taux = (presences_positives / presences.count()) * 100
+                else:
+                    taux = 0
+                
+                data.append({
+                    'nom': tribu.nom,
+                    'taux': round(taux, 1),
+                    'nombre': membres_tribu.count()
+                })
+        return sorted(data, key=lambda x: x['taux'], reverse=True)
+    
+    def _calculer_participation_par_departement(self, date_debut, membres):
+        """Calcule la participation par département (en utilisant SEULEMENT les cultes locaux de chaque département)"""
+        departements = Departement.objects.all()
+        data = []
+        for dept in departements:
+            membres_dept = membres.filter(departement=dept)
+            if membres_dept.count() > 0:
+                # Calculer UNIQUEMENT avec les cultes locaux de ce département
+                presences = Presence.objects.filter(
+                    culte__date__gte=date_debut,
+                    culte__scope='departement',
+                    culte__departement=dept,
+                    membre__in=membres_dept
+                )
+                if presences.count() > 0:
+                    presences_positives = presences.filter(present=True).count()
+                    taux = (presences_positives / presences.count()) * 100
+                else:
+                    taux = 0
+                
+                data.append({
+                    'nom': dept.nom,
+                    'taux': round(taux, 1),
+                    'nombre': membres_dept.count()
+                })
+        return sorted(data, key=lambda x: x['taux'], reverse=True)
 
 
 class AnalyseView(ProtectedDataAccessMixin, TemplateView):
@@ -856,16 +968,21 @@ class AnalyseView(ProtectedDataAccessMixin, TemplateView):
                 else:
                     analyse_tribu = []
             
-            context['analyse_tribu'] = analyse_tribu
-            
-            # Préparer JSON pour graphique
+            # Ajouter le pourcentage calculé
+            analyse_tribu_with_pct = []
             tribu_json = []
             for tribu in analyse_tribu:
-                tribu_json.append({
+                pct = (tribu.actifs / tribu.total * 100) if tribu.total > 0 else 0
+                tribu_with_pct = {
                     'nom': tribu.nom,
                     'total': tribu.total,
-                    'actifs': tribu.actifs
-                })
+                    'actifs': tribu.actifs,
+                    'percentage': round(pct, 1)
+                }
+                analyse_tribu_with_pct.append(tribu_with_pct)
+                tribu_json.append(tribu_with_pct)
+            
+            context['analyse_tribu'] = analyse_tribu_with_pct
             context['tribu_data_json'] = json.dumps(tribu_json)
         
         # Analyse par département (filtrée) - Ne pas afficher si l'utilisateur est patriarche
@@ -892,14 +1009,21 @@ class AnalyseView(ProtectedDataAccessMixin, TemplateView):
             
             context['analyse_departement'] = analyse_departement
             
-            # Préparer JSON pour graphique
+            # Préparer JSON pour graphique avec pourcentages
             dept_json = []
+            analyse_dept_with_pct = []
             for dept in analyse_departement:
-                dept_json.append({
+                pct = (dept.actifs / dept.total * 100) if dept.total > 0 else 0
+                dept_with_pct = {
                     'nom': dept.nom,
                     'total': dept.total,
-                    'actifs': dept.actifs
-                })
+                    'actifs': dept.actifs,
+                    'percentage': round(pct, 1)
+                }
+                analyse_dept_with_pct.append(dept_with_pct)
+                dept_json.append(dept_with_pct)
+            
+            context['analyse_departement'] = analyse_dept_with_pct
             context['departement_data_json'] = json.dumps(dept_json)
         
         # Tendances de participation filtrées

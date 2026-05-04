@@ -389,14 +389,14 @@
     <h4>💡 Insights Clés</h4>
     <div class="insight-item">
         {% if analyse_tribu %}
-        Les structures représentées couvrent <strong>{{ analyse_tribu|length }}</strong> tribu(s)
+        La tribu avec le plus de membres est <strong>{{ analyse_tribu|first|default:"" }}</strong>
         {% endif %}
     </div>
     <div class="insight-item">
-        Au total, <strong>{{ analyse_departement|length }}</strong> département(s) sont représentés
+        Au total, <strong>{{ analyse_tribu|length }}</strong> tribus sont représentées
     </div>
     <div class="insight-item">
-        Consultez régulièrement ces données pour identifier les tendances d'engagement
+        Au total, <strong>{{ analyse_departement|length }}</strong> départements sont représentés
     </div>
 </div>
 

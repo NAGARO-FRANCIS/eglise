@@ -177,6 +177,12 @@ class Culte(models.Model):
         ('special', 'Spécial'),
         ('autre', 'Autre'),
     )
+    
+    SCOPE_CHOICES = (
+        ('global', 'Global'),
+        ('tribu', 'Tribu'),
+        ('departement', 'Département'),
+    )
 
     date = models.DateField()
     type_culte = models.CharField(max_length=20, choices=TYPE_CULTE_CHOICES, default='dimanche')
@@ -186,6 +192,11 @@ class Culte(models.Model):
     nombre_nouveaux = models.IntegerField(default=0)
     notes = models.TextField(blank=True, null=True)
     date_creation = models.DateTimeField(auto_now_add=True)
+    
+    # Champs pour distinguer les cultes locaux des cultes globaux
+    scope = models.CharField(max_length=20, choices=SCOPE_CHOICES, default='global', help_text='Global ou local à une structure')
+    tribu = models.ForeignKey('Tribu', on_delete=models.SET_NULL, null=True, blank=True, related_name='cultes_locaux', help_text='Tribu si culte local')
+    departement = models.ForeignKey('Departement', on_delete=models.SET_NULL, null=True, blank=True, related_name='cultes_locaux', help_text='Département si culte local')
 
     class Meta:
         ordering = ['-date']
