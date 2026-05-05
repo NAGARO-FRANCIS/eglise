@@ -6,17 +6,18 @@ from pathlib import Path
 import os
 import dj_database_url
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-9z98dq_r-_l$tq1hb*^a01ovvk^n)x6$q(s@1r!cevy&(6s0sy')
 
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['*']
 
-# Application definition
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-bb354.up.railway.app',
+]
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -58,7 +59,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'CCR.wsgi.application'
 
-# Database
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
@@ -66,7 +66,6 @@ DATABASES = {
     )
 }
 
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -74,13 +73,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'fr-fr'
 TIME_ZONE = 'Africa/Kinshasa'
 USE_I18N = True
 USE_TZ = True
 
-# Static files
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
@@ -88,7 +85,6 @@ STATICFILES_DIRS = [
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Logging Configuration
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
@@ -131,7 +127,6 @@ LOGGING = {
     },
 }
 
-# PWA Configuration
 PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, 'eglise', 'static', 'js', 'service-worker.js')
 PWA_APP_NAME = 'Gestion d\'Église CCR'
 PWA_APP_DESCRIPTION = 'Application de gestion d\'église avec rapports mensuels et gestion des cultes'
@@ -143,7 +138,6 @@ PWA_APP_ORIENTATION = 'portrait-primary'
 PWA_APP_START_URL = '/'
 PWA_APP_STATUS_BAR_COLOR = 'black-translucent'
 
-# Cache
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -155,6 +149,5 @@ CACHES = {
     }
 }
 
-# Session
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
