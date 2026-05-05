@@ -3,6 +3,15 @@
 {% block title %}Tableau de bord - Gestion d'Église{% endblock %}
 
 {% block content %}
+{% if user.is_superuser %}
+<!-- Bouton Admin - Tout en haut -->
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'eglise:admin_tribu_departement' %}" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; border: 2px solid #c0392b; transition: all 0.3s;">
+        🏛️ Voir toutes les Tribues et Départements
+    </a>
+</div>
+{% endif %}
+
 <div class="card">
     <h2>📊 Tableau de Bord</h2>
     
@@ -87,6 +96,18 @@
     
     <a href="{% url 'eglise:culte_statistiques_view' %}" style="background: white; color: #4caf50; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.3s; display: inline-block; border: 2px solid white;">
         👁️ Voir toutes les statistiques
+    </a>
+</div>
+{% endif %}
+
+{% if user.is_superuser %}
+<!-- Section exclusive pour l'Administrateur -->
+<div class="card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none;">
+    <h2 style="margin-top: 0; color: white;">🔐 Administration Générale</h2>
+    <p style="margin-top: 0; opacity: 0.9;">Accédez à l'interface complète de gestion des tribus et départements</p>
+    
+    <a href="{% url 'eglise:admin_tribu_departement' %}" style="background: white; color: #e74c3c; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; transition: all 0.3s; display: inline-block; border: 2px solid white;">
+        🏛️ Voir toutes les Tribues et Départements
     </a>
 </div>
 {% endif %}
