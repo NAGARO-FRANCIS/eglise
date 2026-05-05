@@ -16,6 +16,8 @@ ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://web-production-bb354.up.railway.app',
+    'https://eglise-6hov.onrender.com',
+
 ]
 
 INSTALLED_APPS = [
