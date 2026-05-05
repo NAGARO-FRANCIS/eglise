@@ -100,15 +100,19 @@ class PatriarcheForm(forms.ModelForm):
         widgets = {
             'photo': forms.FileInput(attrs={
                 'class': 'form-control',
-                'accept': 'image/*'
+                'accept': 'image/*',
+                'required': 'required'
             }),
         }
         labels = {
-            'photo': 'Votre photo (optionnel)',
+            'photo': 'Votre photo de profil (requis)',
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Rendre la photo obligatoire
+        self.fields['photo'].required = True
+        self.fields['photo'].widget.attrs['required'] = 'required'
         self.instance.role = 'patriarche'
     
     def clean(self):
@@ -142,19 +146,26 @@ class ResponsableForm(forms.ModelForm):
         required=True
     )
     
-    photo = forms.ImageField(
-        label="Votre photo (optionnel)",
-        required=False,
-        widget=forms.FileInput(attrs={'class': 'form-control'}),
-        help_text="Format: JPG, PNG. Taille max: 5MB"
-    )
-    
     class Meta:
         model = UserProfile
-        fields = ['departement']
+        fields = ['departement', 'photo']
+        widgets = {
+            'photo': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*',
+                'required': 'required'
+            }),
+        }
+        labels = {
+            'photo': 'Votre photo de profil (requis)',
+        }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Rendre la photo obligatoire
+        self.fields['photo'].required = True
+        self.fields['photo'].widget.attrs['required'] = 'required'
+        self.fields['photo'].help_text = 'Format: JPG, PNG. Taille max: 5MB'
         self.instance.role = 'responsable'
     
     def clean(self):

@@ -272,7 +272,7 @@
         </div>
     {% endif %}
     
-    <form method="post" class="completion-form">
+    <form method="post" enctype="multipart/form-data" class="completion-form">
         {% csrf_token %}
         
         {% if form.non_field_errors %}
@@ -325,6 +325,8 @@
                 <p>Le département représente votre domaine de responsabilité. Vous pouvez modifier cette information ultérieurement.</p>
             </div>
         {% endif %}
+        
+    
         
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Finaliser l'inscription</button>

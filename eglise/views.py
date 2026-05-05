@@ -164,7 +164,7 @@ class RoleCompletionView(TemplateView):
             return redirect('eglise:category-select')
 
         if category == 'patriarche':
-            form = PatriarcheForm(request.POST)
+            form = PatriarcheForm(request.POST, request.FILES)
             if form.is_valid():
                 profile = form.save(commit=False)
                 profile.user = user
@@ -181,7 +181,7 @@ class RoleCompletionView(TemplateView):
                 return render(request, self.template_name, context)
 
         elif category == 'responsable':
-            form = ResponsableForm(request.POST)
+            form = ResponsableForm(request.POST, request.FILES)
             if form.is_valid():
                 profile = form.save(commit=False)
                 profile.user = user
@@ -199,12 +199,17 @@ class RoleCompletionView(TemplateView):
         else:
             return redirect('eglise:category-select')
 
-        # ✅ Nettoyer la session EN PREMIER
+        # ✅ Recharger l'utilisateur depuis la BD pour avoir toutes les infos à jour
+        user = User.objects.get(id=user.id)
+        
+        # ✅ Nettoyer la session
         request.session.pop('new_user_id', None)
         request.session.pop('user_category', None)
         request.session.pop('selected_category', None)
+        request.session.modified = True
 
-        # ✅ Connecter l'utilisateur APRÈS (évite le conflit de token CSRF)
+        # ✅ Connecter l'utilisateur avec le backend correct
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
         login(request, user)
 
         return redirect('eglise:dashboard')

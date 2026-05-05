@@ -49,4 +49,6 @@ urlpatterns = [
     # Rapports mensuels
     path('rapports/', views_rapports.RapportMensuelListView.as_view(), name='rapports_list'),
     path('rapports/<int:pk>/', views_rapports.RapportMensuelDetailView.as_view(), name='rapport_detail'),
+    path('mon-rapport-tribu/', views_rapports.RapportTribuView.as_view(), name='rapport_tribu'),
+    path('mon-rapport-departement/', views_rapports.RapportDepartementView.as_view(), name='rapport_departement'),
 ]

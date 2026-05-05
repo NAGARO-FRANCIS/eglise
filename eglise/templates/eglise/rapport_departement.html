@@ -1,0 +1,279 @@
+{% extends "eglise/base.html" %}
+{% load static %}
+
+{% block title %}Rapport Département - {{ departement_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if user.profile.role == 'responsable' %}
+    <div class="alert alert-info">
+        <h4>📊 Rapport de Département</h4>
+        <p>Vous visualisez le rapport mensuel de votre département: <strong>{{ departement_name }}</strong></p>
+    </div>
+    {% endif %}
+
+    <!-- En-tête du rapport -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3>{{ page_title }}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Période</h5>
+                    <p><strong>{{ rapport.periode_str }}</strong></p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Statut</h5>
+                    {% if rapport.statut == 'brouillon' %}
+                        <span class="badge bg-secondary">Brouillon</span>
+                    {% elif rapport.statut == 'valide' %}
+                        <span class="badge bg-success">Validé</span>
+                    {% elif rapport.statut == 'archive' %}
+                        <span class="badge bg-warning">Archivé</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques des membres -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5>👥 Statistiques des Membres</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-box">
+                        <div class="stat-value">{{ rapport.nombre_total_membres }}</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-box">
+                        <div class="stat-value text-success">{{ rapport.nombre_membres_actifs }}</div>
+                        <div class="stat-label">Actifs</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-box">
+                        <div class="stat-value text-info">{{ rapport.nombre_membres_nouveau }}</div>
+                        <div class="stat-label">Nouveaux</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-box">
+                        <div class="stat-value text-warning">{{ rapport.nombre_membres_inactif }}</div>
+                        <div class="stat-label">Inactifs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Répartition par tribu -->
+    {% if tribu_chart_data %}
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5>📍 Répartition par Tribu</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="tribuChart" height="100"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Statistiques d'assistance -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5>⛪ Statistiques d'Assistance</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <div class="stat-value">{{ rapport.nombre_cultes }}</div>
+                        <div class="stat-label">Cultes</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <div class="stat-value text-success">{{ rapport.nombre_total_presences }}</div>
+                        <div class="stat-label">Présences</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <div class="stat-value text-warning">{{ rapport.taux_participation_moyen }}%</div>
+                        <div class="stat-label">Taux Participation</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cultes par type -->
+    {% if type_culte_chart_data %}
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5>📋 Cultes par Type</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="culteTypeChart" height="100"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Observations -->
+    {% if rapport.notes or rapport.observations %}
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5>📝 Notes et Observations</h5>
+        </div>
+        <div class="card-body">
+            {% if rapport.notes %}
+            <div class="mb-3">
+                <h6>Notes:</h6>
+                <p>{{ rapport.notes }}</p>
+            </div>
+            {% endif %}
+            {% if rapport.observations %}
+            <div>
+                <h6>Observations:</h6>
+                <p>{{ rapport.observations }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Historique des rapports -->
+    {% if historique_rapports %}
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5>📅 Historique des Rapports</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Période</th>
+                        <th>Membres</th>
+                        <th>Cultes</th>
+                        <th>Taux Part.</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in historique_rapports %}
+                    <tr>
+                        <td>{{ r.periode_str }}</td>
+                        <td>{{ r.nombre_total_membres }}</td>
+                        <td>{{ r.nombre_cultes }}</td>
+                        <td>{{ r.taux_participation_moyen }}%</td>
+                        <td>
+                            {% if r.statut == 'brouillon' %}
+                                <span class="badge bg-secondary">Brouillon</span>
+                            {% elif r.statut == 'valide' %}
+                                <span class="badge bg-success">Validé</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="mt-4 mb-4">
+        <a href="{% url 'eglise:rapports_list' %}" class="btn btn-secondary">← Tous les rapports</a>
+    </div>
+</div>
+
+<style>
+.stat-box {
+    text-align: center;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    font-size: 2em;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.stat-label {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+}
+
+.stat-box .text-success .stat-value { color: #28a745; }
+.stat-box .text-info .stat-value { color: #17a2b8; }
+.stat-box .text-warning .stat-value { color: #ffc107; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    {% if tribu_chart_data %}
+    const tribuData = {{ tribu_chart_data|safe }};
+    const tribuCtx = document.getElementById('tribuChart').getContext('2d');
+    new Chart(tribuCtx, {
+        type: 'bar',
+        data: {
+            labels: tribuData.labels,
+            datasets: [{
+                label: 'Membres par Tribu',
+                data: tribuData.values,
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+    {% endif %}
+
+    {% if type_culte_chart_data %}
+    const culteTypeData = {{ type_culte_chart_data|safe }};
+    const culteTypeCtx = document.getElementById('culteTypeChart').getContext('2d');
+    new Chart(culteTypeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: culteTypeData.labels,
+            datasets: [{
+                data: culteTypeData.values,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)',
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

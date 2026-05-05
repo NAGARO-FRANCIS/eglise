@@ -1,0 +1,27 @@
+INFO 2026-05-05 00:03:22,991 base 11760 28064 Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO 2026-05-05 00:03:22,992 base 11760 28064 Added job "Génération automatique des rapports mensuels" to job store "default"
+INFO 2026-05-05 00:03:22,992 base 11760 28064 Scheduler started
+INFO 2026-05-05 00:03:33,055 base 6992 1352 Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO 2026-05-05 00:03:33,055 base 6992 1352 Added job "Génération automatique des rapports mensuels" to job store "default"
+INFO 2026-05-05 00:03:33,056 base 6992 1352 Scheduler started
+INFO 2026-05-05 00:06:49,741 base 13916 24252 Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO 2026-05-05 00:06:49,742 base 13916 24252 Added job "Génération automatique des rapports mensuels" to job store "default"
+INFO 2026-05-05 00:06:49,742 base 13916 24252 Scheduler started
+INFO 2026-05-05 00:06:50,245 base 19700 7280 Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO 2026-05-05 00:06:50,246 base 19700 7280 Added job "Génération automatique des rapports mensuels" to job store "default"
+INFO 2026-05-05 00:06:50,246 base 19700 7280 Scheduler started
+INFO 2026-05-05 00:15:38,763 base 32084 32088 Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO 2026-05-05 00:15:38,763 base 32084 32088 Added job "Génération automatique des rapports mensuels" to job store "default"
+INFO 2026-05-05 00:15:38,764 base 32084 32088 Scheduler started
+INFO 2026-05-05 00:15:45,334 base 32280 32284 Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO 2026-05-05 00:15:45,335 base 32280 32284 Added job "Génération automatique des rapports mensuels" to job store "default"
+INFO 2026-05-05 00:15:45,335 base 32280 32284 Scheduler started
+INFO 2026-05-05 00:16:02,377 base 32444 32448 Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO 2026-05-05 00:16:02,379 base 32444 32448 Added job "Génération automatique des rapports mensuels" to job store "default"
+INFO 2026-05-05 00:16:02,379 base 32444 32448 Scheduler started
+INFO 2026-05-05 00:16:07,715 base 32632 32636 Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO 2026-05-05 00:16:07,715 base 32632 32636 Added job "Génération automatique des rapports mensuels" to job store "default"
+INFO 2026-05-05 00:16:07,716 base 32632 32636 Scheduler started
+INFO 2026-05-05 00:17:46,150 base 27624 28964 Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO 2026-05-05 00:17:46,151 base 27624 28964 Added job "Génération automatique des rapports mensuels" to job store "default"
+INFO 2026-05-05 00:17:46,151 base 27624 28964 Scheduler started

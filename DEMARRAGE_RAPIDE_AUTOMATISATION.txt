@@ -1,0 +1,62 @@
+# ⚡ DÉMARRAGE RAPIDE - AUTOMATISATION COMPLÈTE
+
+## 1️⃣ Installation des dépendances (déjà fait ✅)
+
+```bash
+pip install -r requirements.txt
+```
+
+## 2️⃣ Démarrer le serveur
+
+Le scheduler démarre **automatiquement**:
+
+```bash
+python manage.py runserver
+```
+
+Vous verrez dans la console:
+```
+✅ Scheduler APScheduler démarré avec succès!
+📅 Tâche: Génération des rapports chaque 1er du mois à 00:15 UTC
+```
+
+## 3️⃣ Voir les rapports générés
+
+Allez à: http://localhost:8000/rapports/
+
+## 4️⃣ Générer manuellement (optionnel)
+
+```bash
+# Mois courant
+python manage.py generer_rapports_auto
+
+# Tester le système
+python test_automatisation_rapports.py
+```
+
+## 5️⃣ Vérifier les logs
+
+```bash
+# Fichier
+cat logs/scheduler.log
+
+# Ou dans la console du serveur
+```
+
+## 🎯 Résultat attendu
+
+- ✅ 1 rapport GLOBAL
+- ✅ 1 rapport par TRIBU
+- ✅ 1 rapport par DÉPARTEMENT
+- ✅ Tous les mois, automatiquement
+- ✅ Le 1er du mois à 00:15 UTC
+
+## 📞 Problèmes?
+
+1. Consultez [GUIDE_AUTOMATISATION_RAPPORTS_MENSUELS.md](GUIDE_AUTOMATISATION_RAPPORTS_MENSUELS.md)
+2. Vérifiez `logs/scheduler.log`
+3. Lancez le test: `python test_automatisation_rapports.py`
+
+---
+
+**✅ Système prêt à l'emploi!**

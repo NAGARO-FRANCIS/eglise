@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.utils.html import format_html
+from django.utils.html import format_html, mark_safe
 from .models import Tribu, Departement, Membre, Culte, Presence, Statistique, UserProfile, RapportMensuel
 
 
@@ -211,11 +211,11 @@ class PresenceAdmin(admin.ModelAdmin):
     def present_badge(self, obj):
         """Affiche le statut de présence avec une couleur"""
         if obj.present:
-            return format_html(
+            return mark_safe(
                 '<span style="background-color: #4CAF50; color: white; padding: 3px 10px; border-radius: 3px;">Présent</span>'
             )
         else:
-            return format_html(
+            return mark_safe(
                 '<span style="background-color: #F44336; color: white; padding: 3px 10px; border-radius: 3px;">Absent</span>'
             )
     present_badge.short_description = 'Statut'
