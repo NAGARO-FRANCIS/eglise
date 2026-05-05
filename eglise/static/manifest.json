@@ -1,7 +1,7 @@
 {
-  "name": "Gestion d'Église CCR",
+  "name": "Gestion Eglise CCR",
   "short_name": "CCR",
-  "description": "Application de gestion d'église avec rapports mensuels et gestion des cultes",
+  "description": "Application de gestion eglise avec rapports mensuels",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -35,59 +35,27 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/static/icons/screenshot-1.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/static/icons/screenshot-2.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Tableau de Bord",
       "short_name": "Tableau",
-      "description": "Accéder au tableau de bord",
+      "description": "Acceder au tableau de bord",
       "url": "/",
-      "icons": [
-        {
-          "src": "/static/icons/icon-96x96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
+      "icons": [{"src": "/static/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png"}]
     },
     {
       "name": "Mes Rapports",
       "short_name": "Rapports",
       "description": "Voir mes rapports mensuels",
       "url": "/rapports/",
-      "icons": [
-        {
-          "src": "/static/icons/icon-96x96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
+      "icons": [{"src": "/static/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png"}]
     },
     {
       "name": "Liste des Membres",
       "short_name": "Membres",
-      "description": "Gérer les membres",
+      "description": "Gerer les membres",
       "url": "/membres/",
-      "icons": [
-        {
-          "src": "/static/icons/icon-96x96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
+      "icons": [{"src": "/static/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png"}]
     }
   ]
 }
