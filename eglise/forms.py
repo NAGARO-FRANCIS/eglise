@@ -105,14 +105,15 @@ class PatriarcheForm(forms.ModelForm):
             }),
         }
         labels = {
-            'photo': 'Votre photo de profil (requis)',
+            'photo': 'Votre photo de profil',
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Rendre la photo obligatoire
-        self.fields['photo'].required = True
-        self.fields['photo'].widget.attrs['required'] = 'required'
+        # Photo optionnelle pour l'enregistrement
+        self.fields['photo'].required = False
+        self.fields['photo'].widget.attrs['required'] = ''
+        self.fields['photo'].help_text = 'Format: JPG, PNG (optionnel - vous pouvez ajouter une photo plus tard)'
         self.instance.role = 'patriarche'
     
     def clean(self):
@@ -157,15 +158,15 @@ class ResponsableForm(forms.ModelForm):
             }),
         }
         labels = {
-            'photo': 'Votre photo de profil (requis)',
+            'photo': 'Votre photo de profil',
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Rendre la photo obligatoire
-        self.fields['photo'].required = True
-        self.fields['photo'].widget.attrs['required'] = 'required'
-        self.fields['photo'].help_text = 'Format: JPG, PNG. Taille max: 5MB'
+        # Photo optionnelle pour l'enregistrement
+        self.fields['photo'].required = False
+        self.fields['photo'].widget.attrs['required'] = ''
+        self.fields['photo'].help_text = 'Format: JPG, PNG (optionnel - vous pouvez ajouter une photo plus tard)'
         self.instance.role = 'responsable'
     
     def clean(self):

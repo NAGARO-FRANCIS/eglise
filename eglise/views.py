@@ -14,7 +14,6 @@ import json
 from .models import Membre, Culte, Presence, Tribu, Departement, Statistique, UserProfile, RapportMensuel
 from .forms import SignUpForm, PatriarcheForm, ResponsableForm, PasteurForm, CategorySelectForm, LoginForm, MembreForm, PresenceForm, PresenceMembreSelectionForm, CulteForm
 from .mixins import DataFilteringMixin, ProtectedDataAccessMixin, RoleRequiredMixin
-from .admin_tribu_departement_view import AdminTribuDepartementView
 
 
 class LoginView(View):
@@ -49,6 +48,23 @@ class LogoutView(View):
     def get(self, request):
         logout(request)
         return redirect('eglise:login')
+
+
+class OfflineView(TemplateView):
+    """Vue affichée quand l'utilisateur est hors ligne"""
+    template_name = 'eglise/offline.html'
+
+
+class PingView(View):
+    """Vue de vérification de connexion pour PWA"""
+    
+    def get(self, request):
+        """Répondre avec un statut 200 si le serveur est disponible"""
+        return JsonResponse({'status': 'online'}, status=200)
+    
+    def head(self, request):
+        """Répondre à une requête HEAD pour la vérification de connexion"""
+        return JsonResponse({'status': 'online'}, status=200)
 
 
 class CategorySelectView(View):

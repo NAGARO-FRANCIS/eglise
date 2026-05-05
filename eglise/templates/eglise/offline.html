@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mode Hors Ligne</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        
+        .offline-container {
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 500px;
+        }
+        
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        p {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .info-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: left;
+            font-size: 14px;
+        }
+        
+        .info-box strong {
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .info-box li {
+            padding: 5px 0;
+            opacity: 0.8;
+        }
+        
+        .info-box li:before {
+            content: "✓ ";
+            margin-right: 8px;
+        }
+        
+        .button {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        
+        <h1>Mode Hors Ligne</h1>
+        <p>Vous êtes actuellement hors ligne. Vérifiez votre connexion Internet et réessayez.</p>
+        
+        <div class="info-box">
+            <strong>💡 Que pouvez-vous faire ?</strong>
+            <ul>
+                <li>Consulter les rapports précédemment chargés</li>
+                <li>Visualiser les données mises en cache</li>
+                <li>Attendre la reconnexion pour synchroniser les modifications</li>
+            </ul>
+        </div>
+        
+        <button class="button" onclick="location.reload()">
+            Réessayer de connexion
+            <span class="loading"></span>
+        </button>
+        
+        <p style="margin-top: 40px; font-size: 12px; opacity: 0.7;">
+            Gestion d'Église CCR • Application PWA
+        </p>
+    </div>
+    
+    <script>
+        // Vérifier périodiquement la connexion
+        setInterval(() => {
+            fetch('/ping', { method: 'HEAD', no_cors: true })
+                .then(() => {
+                    // Connexion rétablie
+                    location.reload();
+                })
+                .catch(() => {
+                    // Toujours hors ligne
+                });
+        }, 5000);
+    </script>
+</body>
+</html>

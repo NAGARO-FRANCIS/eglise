@@ -326,7 +326,22 @@
             </div>
         {% endif %}
         
-    
+        <!-- Photo de profil -->
+        <div class="form-group" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+            <label for="{{ form.photo.id_for_label }}">Photo de profil <span style="color: #999; font-weight: normal;">(optionnel)</span></label>
+            <p style="color: #666; font-size: 13px; margin-bottom: 10px;">📷 Téléchargez une photo de profil (JPG, PNG). Vous pouvez la ajouter ou modifier plus tard.</p>
+            {{ form.photo }}
+            {% if form.photo.help_text %}
+                <p style="color: #999; font-size: 12px; margin-top: 5px;">{{ form.photo.help_text|safe }}</p>
+            {% endif %}
+            {% if form.photo.errors %}
+                <ul class="errorlist">
+                    {% for error in form.photo.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
         
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Finaliser l'inscription</button>

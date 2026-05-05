@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <!-- Background -->
+  <rect width="192" height="192" fill="#ffffff"/>
+  
+  <!-- Background circle -->
+  <circle cx="96" cy="96" r="86" fill="#000000"/>
+  
+  <!-- Church cross shape -->
+  <g fill="white" opacity="1">
+    <!-- Vertical bar -->
+    <rect x="76" y="38" width="38" height="115" rx="9"/>
+    
+    <!-- Horizontal bar -->
+    <rect x="48" y="76" width="96" height="38" rx="9"/>
+    
+    <!-- Top triangle (roof) -->
+    <polygon points="96,19 57,38 134,38"/>
+  </g>
+</svg>

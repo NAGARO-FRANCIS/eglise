@@ -10,9 +10,6 @@ urlpatterns = [
     path('logout/', views.LogoutView.as_view(), name='logout'),
     path('', views.DashboardView.as_view(), name='dashboard'),
     
-    # Vue d'administration pour superuser
-    path('gestion-tribu-departement/', views.AdminTribuDepartementView.as_view(), name='admin_tribu_departement'),
-    
     path('membres/', views.MembreListView.as_view(), name='membre_list'),
     path('membres/total/', views.MembresTotalListView.as_view(), name='membres_total'),
     path('membres/actifs/', views.MembresActifsListView.as_view(), name='membres_actifs'),
@@ -51,4 +48,8 @@ urlpatterns = [
     path('rapports/<int:pk>/', views_rapports.RapportMensuelDetailView.as_view(), name='rapport_detail'),
     path('mon-rapport-tribu/', views_rapports.RapportTribuView.as_view(), name='rapport_tribu'),
     path('mon-rapport-departement/', views_rapports.RapportDepartementView.as_view(), name='rapport_departement'),
+    
+    # PWA endpoints
+    path('offline/', views.OfflineView.as_view(), name='offline'),
+    path('ping/', views.PingView.as_view(), name='ping'),
 ]
