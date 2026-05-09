@@ -79,6 +79,61 @@
 <div class="card">
     <h2 style="color: #2c3e50; text-align: center; margin-bottom: 30px;">📊 Tableau de Bord</h2>
     
+    <!-- Bouton Ajouter Membre spécial pour patriarche et responsable -->
+    {% if user_role == 'patriarche' and user_tribu %}
+    <div style="display: flex; justify-content: center; margin-bottom: 30px;">
+        <a href="{% url 'eglise:tribu_membres' user_tribu.id %}" style="text-decoration: none; display: inline-block;">
+            <button class="member-btn" style="padding: 16px 32px; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3); transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
+                <span style="font-size: 24px;">➕</span> <span class="member-btn-text">Ajouter un Membre</span>
+            </button>
+        </a>
+    </div>
+    {% endif %}
+    
+    <!-- Bouton Ajouter Membre spécial pour responsable -->
+    {% if user_role == 'responsable' and user_departement %}
+    <div style="display: flex; justify-content: center; margin-bottom: 30px;">
+        <a href="{% url 'eglise:departement_membres' user_departement.id %}" style="text-decoration: none; display: inline-block;">
+            <button class="member-btn" style="padding: 16px 32px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3); transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
+                <span style="font-size: 24px;">➕</span> <span class="member-btn-text">Ajouter un Membre</span>
+            </button>
+        </a>
+    </div>
+    {% endif %}
+    
+    <!-- Bouton hover effect -->
+    <style>
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+        }
+        
+        @media (max-width: 768px) {
+            .admin-btn {
+                padding: 12px 16px !important;
+                font-size: 14px !important;
+                gap: 6px !important;
+            }
+            .admin-btn span {
+                font-size: 18px !important;
+            }
+            .admin-btn-text {
+                display: none;
+            }
+        }
+    </style>
+    
+    <!-- Bouton Vue Admin pour administrateur -->
+    {% if user_role == 'admin' %}
+    <div style="display: flex; justify-content: center; margin-bottom: 30px;">
+        <a href="{% url 'eglise:admin_tribu_departement' %}" style="text-decoration: none; display: inline-block;">
+            <button class="admin-btn" style="padding: 16px 32px; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3); transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
+                <span style="font-size: 24px;">👁️</span> <span class="admin-btn-text">Vue Admin - Tribus & Départements</span>
+            </button>
+        </a>
+    </div>
+    {% endif %}
+    
     <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
         <a href="{% url 'eglise:membres_total' %}" style="text-decoration: none; color: inherit;">
             <div class="stat-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
@@ -116,47 +171,11 @@
 </div>
 
 {% if show_tribu_section %}
-<div class="card" style="border-left-color: #26c281;">
-    <h2 style="color: #26c281;">📍 Ma Tribu</h2>
-    <table>
-        <thead>
-            <tr style="background: linear-gradient(135deg, #e8f8f5 0%, #f0fdf4 100%);">
-                <th style="color: #26c281;">Nom</th>
-                <th style="color: #26c281;">Nombre de Membres</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for tribu in membres_par_tribu %}
-            <tr>
-                <td><a href="{% url 'eglise:tribu_membres' tribu.id %}" style="text-decoration: none; color: #26c281; font-weight: 500;">{{ tribu.nom }}</a></td>
-                <td><strong style="color: #26c281; font-size: 1.1em;">{{ tribu.nombre }}</strong></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+
 {% endif %}
 
 {% if show_departement_section %}
-<div class="card" style="border-left-color: #3498db;">
-    <h2 style="color: #3498db;">🏢 Mon Département</h2>
-    <table>
-        <thead>
-            <tr style="background: linear-gradient(135deg, #ebf5fb 0%, #eaf2f8 100%);">
-                <th style="color: #3498db;">Nom</th>
-                <th style="color: #3498db;">Nombre de Membres</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for dept in membres_par_departement %}
-            <tr>
-                <td><a href="{% url 'eglise:departement_membres' dept.id %}" style="text-decoration: none; color: #3498db; font-weight: 500;">{{ dept.nom }}</a></td>
-                <td><strong style="color: #3498db; font-size: 1.1em;">{{ dept.nombre }}</strong></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+
 {% endif %}
 
 <div class="card" style="border-left-color: #f39c12;">

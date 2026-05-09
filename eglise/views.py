@@ -284,6 +284,9 @@ class DashboardView(ProtectedDataAccessMixin, TemplateView):
         except:
             pass
         
+        # Ajouter le rôle au contexte pour tous les utilisateurs
+        context['user_role'] = user_role
+        
         # Statistiques par tribu (filtrées) - Ne pas afficher si l'utilisateur est responsable
         if user_role == 'responsable':
             context['membres_par_tribu'] = []
@@ -375,11 +378,13 @@ class DashboardView(ProtectedDataAccessMixin, TemplateView):
         if user_role in ['patriarche', 'responsable']:
             context['personalized_trend_json'] = self.get_personalized_attendance_trend(user, user_role)
             
-            # Ajouter le nom du responsable
+            # Ajouter le nom du responsable et ses infos pour ajouter un membre
             if user_role == 'patriarche' and hasattr(user, 'profile') and user.profile.tribu:
                 context['group_name'] = f"Tribu: {user.profile.tribu.nom}"
+                context['user_tribu'] = user.profile.tribu
             elif user_role == 'responsable' and hasattr(user, 'profile') and user.profile.departement:
                 context['group_name'] = f"Département: {user.profile.departement.nom}"
+                context['user_departement'] = user.profile.departement
         
         # Données JSON pour les graphiques (si admin ou pasteur)
         if user_role in ['admin', 'pasteur']:

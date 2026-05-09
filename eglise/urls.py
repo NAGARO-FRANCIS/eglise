@@ -10,7 +10,7 @@ urlpatterns = [
     path('login/', views.LoginView.as_view(), name='login'),
     path('logout/', views.LogoutView.as_view(), name='logout'),
     path('', views.DashboardView.as_view(), name='dashboard'),
-    path('admin/tribues-departements/', admin_tribu_departement_view.AdminTribuDepartementView.as_view(), name='admin_tribu_departement'),
+    path('vue-admin/tribus-departements/', admin_tribu_departement_view.AdminTribuDepartementView.as_view(), name='admin_tribu_departement'),
     
     path('membres/', views.MembreListView.as_view(), name='membre_list'),
     path('membres/total/', views.MembresTotalListView.as_view(), name='membres_total'),
