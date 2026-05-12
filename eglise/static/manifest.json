@@ -1,7 +1,7 @@
 {
-  "name": "Gestion Eglise CCR",
+  "name": "Gestion d'Église CCR",
   "short_name": "CCR",
-  "description": "Application de gestion eglise avec rapports mensuels",
+  "description": "Application de gestion d'église avec rapports mensuels et gestion des cultes",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,6 +10,12 @@
   "theme_color": "#5e72e4",
   "categories": ["business", "productivity"],
   "icons": [
+    {
+      "src": "/static/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/static/icons/icon-192x192.png",
       "sizes": "192x192",
@@ -35,11 +41,25 @@
       "purpose": "maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/static/icons/screenshot-1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/static/icons/screenshot-2.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Tableau de Bord",
       "short_name": "Tableau",
-      "description": "Acceder au tableau de bord",
+      "description": "Accéder au tableau de bord",
       "url": "/",
       "icons": [{"src": "/static/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png"}]
     },
@@ -53,7 +73,7 @@
     {
       "name": "Liste des Membres",
       "short_name": "Membres",
-      "description": "Gerer les membres",
+      "description": "Gérer les membres",
       "url": "/membres/",
       "icons": [{"src": "/static/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png"}]
     }
