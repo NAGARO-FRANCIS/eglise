@@ -1,1 +1,1 @@
-﻿web: python manage.py migrate && gunicorn CCR.wsgi
+﻿web: python manage.py migrate && python create_admin.py && gunicorn CCR.wsgi
