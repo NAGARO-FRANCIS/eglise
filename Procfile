@@ -1,1 +1,1 @@
-﻿web: python manage.py migrate && python create_admin.py && gunicorn CCR.wsgi
+﻿web: python manage.py migrate --run-syncdb && python create_admin.py && gunicorn CCR.wsgi
