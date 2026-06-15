@@ -111,7 +111,7 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': 'logs/scheduler.log',
+            'filename': os.path.join(BASE_DIR, 'logs', 'scheduler.log'),
             'formatter': 'verbose',
         },
     },
