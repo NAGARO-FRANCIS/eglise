@@ -103,18 +103,25 @@
             gap: 1rem;
             position: relative;
             z-index: 1;
+            flex-wrap: wrap;
         }
         
         header .logo {
-            width: clamp(50px, 10vw, 80px);
-            height: clamp(50px, 10vw, 80px);
+            width: clamp(50px, 12vw, 90px);
+            height: clamp(50px, 12vw, 90px);
             flex-shrink: 0;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3)) brightness(1.05);
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+        
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
         }
         
         header h1 {
             text-align: center;
-            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            font-size: clamp(1.3rem, 5vw, 2.5rem);
             margin: 0;
             padding: 0.5rem 1rem;
             word-break: break-word;
@@ -122,6 +129,8 @@
             letter-spacing: -0.5px;
             position: relative;
             z-index: 1;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: #ffffff;
         }
         
         /* NAVIGATION RESPONSIVE */
