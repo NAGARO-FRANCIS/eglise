@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html, mark_safe
-from .models import Tribu, Departement, Membre, Culte, Presence, Statistique, UserProfile, RapportMensuel
+from .models import Tribu, Departement, Membre, Culte, Presence, Statistique, UserProfile, RapportMensuel, RapportHebdomadaire
 
 
 @admin.register(UserProfile)
@@ -242,6 +242,14 @@ class StatistiqueAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(RapportHebdomadaire)
+class RapportHebdomadaireAdmin(admin.ModelAdmin):
+    list_display = ['date_debut', 'date_fin', 'type_rapport', 'tribu', 'total_participants', 'total_nouveaux']
+    list_filter = ['type_rapport', 'date_debut', 'tribu']
+    ordering = ['-date_fin', 'type_rapport']
+    readonly_fields = ['date_creation']
 
 
 @admin.register(RapportMensuel)

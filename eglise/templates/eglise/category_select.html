@@ -3,187 +3,318 @@
 {% block title %}Sélection de Catégorie - Inscription{% endblock %}
 
 {% block content %}
+
 <style>
-    .category-container {
-        max-width: 600px;
-        margin: 60px auto;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+}
+
+body{
+    background:#ffffff;
+    min-height:100vh;
+}
+
+.category-container{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:90vh;
+    padding:30px;
+}
+
+.category-card{
+    width:100%;
+    max-width:700px;
+    background:#fff;
+    border-radius:25px;
+    padding:45px;
+    box-shadow:0 25px 60px rgba(0,0,0,.2);
+    animation:fadeIn .6s ease;
+}
+
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(40px);
     }
-    
-    .category-header {
-        text-align: center;
-        margin-bottom: 40px;
+    to{
+        opacity:1;
+        transform:translateY(0);
     }
-    
-    .category-header h2 {
-        color: #667eea;
-        font-size: 32px;
-        margin-bottom: 10px;
-    }
-    
-    .category-header p {
-        color: #666;
-        font-size: 16px;
-    }
-    
-    .category-form {
-        background: white;
-        padding: 40px;
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .form-group {
-        margin-bottom: 20px;
-    }
-    
-    .radio-options {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-    
-    .radio-option {
-        display: flex;
-        align-items: center;
-        padding: 20px;
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .radio-option:hover {
-        border-color: #667eea;
-        background-color: #f8f9ff;
-    }
-    
-    .radio-option input[type="radio"] {
-        width: 20px;
-        height: 20px;
-        margin-right: 20px;
-        cursor: pointer;
-        accent-color: #667eea;
-    }
-    
-    .radio-option input[type="radio"]:checked + .option-label {
-        color: #667eea;
-        font-weight: bold;
-    }
-    
-    .radio-option input[type="radio"]:checked + .option-label .icon {
-        transform: scale(1.1);
-    }
-    
-    .option-label {
-        flex: 1;
-        cursor: pointer;
-    }
-    
-    .icon {
-        font-size: 32px;
-        margin-right: 15px;
-        display: inline-block;
-        transition: transform 0.3s ease;
-    }
-    
-    .option-title {
-        font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 5px;
-        color: #333;
-    }
-    
-    .option-description {
-        font-size: 14px;
-        color: #999;
-    }
-    
-    .form-actions {
-        margin-top: 30px;
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-    }
-    
-    .btn {
-        padding: 12px 30px;
-        border: none;
-        border-radius: 5px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        flex: 1;
-        max-width: 200px;
-    }
-    
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-    
-    .btn-primary:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-    
-    .error-message {
-        color: #F44336;
-        padding: 12px;
-        border-radius: 5px;
-        background-color: #ffebee;
-        margin-bottom: 20px;
-    }
+}
+
+.logo{
+    width:90px;
+    height:90px;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    border-radius:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin:0 auto 20px;
+    color:#fff;
+    font-size:45px;
+    box-shadow:0 15px 35px rgba(102,126,234,.4);
+}
+
+.category-header{
+    text-align:center;
+    margin-bottom:35px;
+}
+
+.category-header h1{
+    color:#4b4b4b;
+    font-size:34px;
+    margin-bottom:10px;
+}
+
+.category-header h2{
+    color:#667eea;
+    font-size:28px;
+    margin-bottom:10px;
+}
+
+.category-header p{
+    color:#777;
+    font-size:16px;
+    line-height:1.6;
+}
+
+.radio-options{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+.radio-option{
+    display:flex;
+    align-items:center;
+    padding:22px;
+    border:2px solid #e5e7eb;
+    border-radius:18px;
+    cursor:pointer;
+    transition:.35s;
+    background:#fafafa;
+}
+
+.radio-option:hover{
+    border-color:#667eea;
+    background:#fff;
+    transform:translateY(-5px);
+    box-shadow:0 15px 35px rgba(102,126,234,.25);
+}
+
+.radio-option input[type="radio"]{
+    width:22px;
+    height:22px;
+    margin-right:20px;
+    cursor:pointer;
+    accent-color:#667eea;
+}
+
+.option-content{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    width:100%;
+}
+
+.icon{
+    font-size:55px;
+    min-width:60px;
+    text-align:center;
+}
+
+.option-title{
+    font-size:21px;
+    font-weight:700;
+    color:#333;
+    margin-bottom:6px;
+}
+
+.option-description{
+    color:#777;
+    font-size:15px;
+}
+
+.radio-option input[type="radio"]:checked + .option-content{
+    color:#667eea;
+}
+
+.radio-option:has(input[type="radio"]:checked){
+    border-color:#667eea;
+    background:#f3f5ff;
+    box-shadow:0 10px 30px rgba(102,126,234,.25);
+}
+
+.error-message{
+    background:#ffebee;
+    color:#d32f2f;
+    padding:14px;
+    border-radius:10px;
+    margin-bottom:20px;
+    text-align:center;
+}
+
+.form-actions{
+    margin-top:35px;
+}
+
+.btn{
+    width:100%;
+    border:none;
+    padding:16px;
+    border-radius:15px;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.btn-primary{
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:white;
+}
+
+.btn-primary:hover{
+    transform:translateY(-3px);
+    box-shadow:0 15px 35px rgba(102,126,234,.4);
+}
+
+@media(max-width:768px){
+
+.category-card{
+    padding:30px 20px;
+}
+
+.logo{
+    width:75px;
+    height:75px;
+    font-size:38px;
+}
+
+.category-header h1{
+    font-size:28px;
+}
+
+.category-header h2{
+    font-size:23px;
+}
+
+.option-content{
+    gap:15px;
+}
+
+.icon{
+    font-size:42px;
+}
+
+.option-title{
+    font-size:18px;
+}
+
+.option-description{
+    font-size:14px;
+}
+
+}
 </style>
 
 <div class="category-container">
-    <div class="category-header">
-        <h2>📝 Inscription</h2>
-        <p>Choisissez votre catégorie pour commencer</p>
-    </div>
-    
-    <form method="post" class="category-form">
-        {% csrf_token %}
-        
-        {% if form.non_field_errors %}
-            <div class="error-message">
-                {{ form.non_field_errors }}
-            </div>
-        {% endif %}
-        
-        <div class="form-group">
+
+    <div class="category-card">
+
+        <div class="logo">
+            ⛪
+        </div>
+
+        <div class="category-header">
+            <h1>Centre Chrétien de Réveil</h1>
+            <h2>📝 Inscription</h2>
+            <p>
+                Sélectionnez votre rôle afin de continuer votre inscription.
+            </p>
+        </div>
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="error-message">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
             <div class="radio-options">
+
                 {% for radio in form.category %}
-                    <label class="radio-option">
-                        {{ radio.tag }}
-                        <div class="option-label">
-                            {% if "patriarche" in radio.data.value %}
-                                <span class="icon">👑</span>
-                                <div class="option-title">Patriarche de Tribu</div>
-                                <div class="option-description">Vous dirigez une tribu dans l'église</div>
-                            {% else %}
-                                <span class="icon">⚙️</span>
-                                <div class="option-title">Responsable de Département</div>
-                                <div class="option-description">Vous dirigez un département</div>
-                            {% endif %}
-                        </div>
-                    </label>
+
+                <label class="radio-option">
+
+                    {{ radio.tag }}
+
+                    <div class="option-content">
+
+                        {% if "patriarche" in radio.data.value %}
+
+                            <div class="icon">👑</div>
+
+                            <div>
+                                <div class="option-title">
+                                    Patriarche de Tribu
+                                </div>
+
+                                <div class="option-description">
+                                    Responsable d'une tribu, suivi des membres et gestion des activités.
+                                </div>
+                            </div>
+
+                        {% else %}
+
+                            <div class="icon">⚙️</div>
+
+                            <div>
+                                <div class="option-title">
+                                    Responsable de Département
+                                </div>
+
+                                <div class="option-description">
+                                    Responsable d'un département de l'église et de son organisation.
+                                </div>
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </label>
+
                 {% endfor %}
+
             </div>
+
             {% if form.category.errors %}
                 <div class="error-message">
                     {{ form.category.errors }}
                 </div>
             {% endif %}
-        </div>
-        
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Continuer</button>
-        </div>
-    </form>
+
+            <div class="form-actions">
+
+                <button type="submit" class="btn btn-primary">
+                    Continuer →
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
 </div>
+
 {% endblock %}

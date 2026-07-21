@@ -11,7 +11,7 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from django.utils import timezone
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Fix encodage Windows (cp1252 ne supporte pas les emojis)
 if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
@@ -21,6 +21,106 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
 logger = logging.getLogger(__name__)
 scheduler = None
 SCHEDULER_STARTED = False
+
+
+def generate_weekly_reports(date=None):
+    try:
+        import django
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'CCR.settings')
+
+        if not django.apps.apps.ready:
+            django.setup()
+
+        from eglise.models import Culte, Membre, Presence, RapportHebdomadaire, Tribu
+
+        reference_date = date or timezone.now().date()
+        start_of_week = reference_date - timedelta(days=reference_date.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+
+        cultes = Culte.objects.filter(date__range=[start_of_week, end_of_week]).order_by('date')
+        total_participants = sum(culte.nombre_participants or 0 for culte in cultes)
+        total_nouveaux = sum(culte.nombre_nouveaux or 0 for culte in cultes)
+
+        rapport_evolution, created = RapportHebdomadaire.objects.get_or_create(
+            date_debut=start_of_week,
+            date_fin=end_of_week,
+            type_rapport='evolution_culte',
+            tribu=None,
+            defaults={
+                'total_participants': total_participants,
+                'total_nouveaux': total_nouveaux,
+                'nombre_cultes': cultes.count(),
+                'details': [
+                    {
+                        'date': culte.date.isoformat(),
+                        'participants': culte.nombre_participants,
+                        'nouveaux': culte.nombre_nouveaux,
+                        'theme': culte.theme,
+                    }
+                    for culte in cultes
+                ],
+            },
+        )
+        rapport_evolution.total_participants = total_participants
+        rapport_evolution.total_nouveaux = total_nouveaux
+        rapport_evolution.nombre_cultes = cultes.count()
+        rapport_evolution.details = [
+            {
+                'date': culte.date.isoformat(),
+                'participants': culte.nombre_participants,
+                'nouveaux': culte.nombre_nouveaux,
+                'theme': culte.theme,
+            }
+            for culte in cultes
+        ]
+        rapport_evolution.save()
+
+        rapports_tribus = 0
+        for tribu in Tribu.objects.all():
+            membres = Membre.objects.filter(tribu=tribu)
+            presences = Presence.objects.filter(
+                culte__date__range=[start_of_week, end_of_week],
+                membre__in=membres,
+                present=True,
+            )
+            nouveaux = membres.filter(statut='nouveau', date_adhesion__range=[start_of_week, end_of_week]).count()
+            cultes_tribu = Culte.objects.filter(date__range=[start_of_week, end_of_week], tribu=tribu).count()
+
+            rapport_tribu, _ = RapportHebdomadaire.objects.get_or_create(
+                date_debut=start_of_week,
+                date_fin=end_of_week,
+                type_rapport='tribu',
+                tribu=tribu,
+                defaults={
+                    'total_participants': presences.count(),
+                    'total_nouveaux': nouveaux,
+                    'nombre_cultes': cultes_tribu,
+                    'nombre_tribus': Tribu.objects.count(),
+                    'details': {
+                        'membres': membres.count(),
+                        'participants': presences.count(),
+                        'nouveaux': nouveaux,
+                    },
+                },
+            )
+            rapport_tribu.total_participants = presences.count()
+            rapport_tribu.total_nouveaux = nouveaux
+            rapport_tribu.nombre_cultes = cultes_tribu
+            rapport_tribu.nombre_tribus = Tribu.objects.count()
+            rapport_tribu.details = {
+                'membres': membres.count(),
+                'participants': presences.count(),
+                'nouveaux': nouveaux,
+            }
+            rapport_tribu.save()
+            rapports_tribus += 1
+
+        logger.info(f"Rapports hebdomadaires générés pour la semaine {start_of_week} -> {end_of_week}")
+        return {'evolution': 1, 'tribu': rapports_tribus}
+
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération automatique des rapports hebdomadaires: {str(e)}", exc_info=True)
+        return {'evolution': 0, 'tribu': 0}
 
 
 def generate_monthly_reports():
@@ -235,11 +335,21 @@ def start_scheduler():
             replace_existing=True,
             misfire_grace_time=900
         )
+
+        scheduler.add_job(
+            generate_weekly_reports,
+            trigger=CronTrigger(day_of_week='sun', hour=20, minute=0),
+            id='generer_rapports_hebdomadaires',
+            name='Generation automatique des rapports hebdomadaires',
+            replace_existing=True,
+            misfire_grace_time=1800
+        )
         
         scheduler.start()
         SCHEDULER_STARTED = True
         logger.info("Scheduler APScheduler demarre avec succes!")
-        logger.info("   Tache: Generation des rapports chaque 1er du mois a 00:15 UTC")
+        logger.info("   Tache mensuelle: Generation des rapports chaque 1er du mois a 00:15 UTC")
+        logger.info("   Tache hebdomadaire: Generation des rapports chaque dimanche a 20:00")
         
     except Exception as e:
         logger.error(f"Erreur lors du demarrage du scheduler: {str(e)}", exc_info=True)

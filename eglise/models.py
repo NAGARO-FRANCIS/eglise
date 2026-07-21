@@ -316,3 +316,34 @@ class RapportMensuel(models.Model):
             9: 'Septembre', 10: 'Octobre', 11: 'Novembre', 12: 'Décembre'
         }
         return f"{mois_names.get(self.mois, 'N/A')} {self.annee}"
+
+
+class RapportHebdomadaire(models.Model):
+    """Rapport hebdomadaire pour l'évolution du culte et les tribus."""
+    TYPE_CHOICES = (
+        ('evolution_culte', 'Évolution du culte'),
+        ('tribu', 'Rapport par tribu'),
+    )
+
+    date_debut = models.DateField()
+    date_fin = models.DateField()
+    type_rapport = models.CharField(max_length=30, choices=TYPE_CHOICES)
+    tribu = models.ForeignKey(Tribu, on_delete=models.CASCADE, null=True, blank=True, related_name='rapports_hebdomadaires')
+
+    total_participants = models.IntegerField(default=0)
+    total_nouveaux = models.IntegerField(default=0)
+    nombre_cultes = models.IntegerField(default=0)
+    nombre_tribus = models.IntegerField(default=0)
+    details = models.JSONField(default=dict, blank=True)
+
+    date_creation = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date_fin', 'type_rapport']
+        unique_together = [('date_debut', 'date_fin', 'type_rapport', 'tribu')]
+        verbose_name_plural = 'Rapports Hebdomadaires'
+
+    def __str__(self):
+        if self.type_rapport == 'tribu' and self.tribu:
+            return f"Rapport hebdo {self.tribu.nom} ({self.date_debut} -> {self.date_fin})"
+        return f"Rapport hebdo {self.get_type_rapport_display()} ({self.date_debut} -> {self.date_fin})"
